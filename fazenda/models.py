@@ -49,8 +49,8 @@ class FichaOrdenha(models.Model):
     data = models.DateField(default=timezone.now, blank=True, null=True)
 
     class Meta:
-        verbose_name = "Ficha de Ordenha"
-        verbose_name_plural = "Fichas de Ordenha"
+        verbose_name = "Ficha de Ordenhas"
+        verbose_name_plural = "Fichas de Ordenhas"
 
 
 class Ordenha(models.Model):
@@ -84,3 +84,7 @@ class FotoOrdenha(models.Model):
     image = models.ImageField()
     linhas = models.ImageField(null=True, blank=True)
     bbox = models.ImageField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Foto de Ordenhas"
+        verbose_name_plural = "Fotos de Ordenhas"
