@@ -43,7 +43,6 @@ THIRD_PARTY_APPS = [
     "jazzmin",
     "django_extensions",
     "debug_toolbar",
-    "dragndrop_related",
 ]
 
 MY_APPS = [
@@ -157,8 +156,8 @@ JAZZMIN_SETTINGS = {
     "site_header": "Griselda Admin",
     # Title on the brand (19 chars max) (defaults to current_admin_site.site_header if absent or None)
     "site_brand": "Griselda Admin",
-    "site_logo": "fazenda/griselda.png",
-    "login_logo": "fazenda/griselda-login.png",
+    "site_logo": "fazenda/cow.png",
+    "login_logo": "fazenda/cow-login-square.png",
     # Logo to use for login form in dark themes (defaults to login_logo)
     "login_logo_dark": None,
     # CSS classes that are applied to the logo above
