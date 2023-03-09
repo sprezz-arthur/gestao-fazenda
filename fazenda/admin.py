@@ -7,6 +7,11 @@ class FazendaAdmin(admin.ModelAdmin):
     pass
 
 
+@admin.register(models.Ordenha)
+class OrdenhaAdmin(admin.ModelAdmin):
+    pass
+
+
 @admin.register(models.Vaca)
 class VacaAdmin(admin.ModelAdmin):
     list_display = ["zero_numero", "prefixo", "nome", "image_tag"]
