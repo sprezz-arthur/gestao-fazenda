@@ -1,8 +1,8 @@
 from django.db import models
-
 from django.core.files.storage import FileSystemStorage
-
 from django.utils import timezone
+
+from .choices import PREFIXO_CHOICES, PERIODO_CHOICES
 
 
 class Fazenda(models.Model):
@@ -11,27 +11,6 @@ class Fazenda(models.Model):
 
 
 class Vaca(models.Model):
-
-    PREFIXO_CHOICES = [
-        ("TE", "Transferência Embrionária"),
-        (
-            "AM",
-            "Amojada",
-        ),
-        (
-            "PRI",
-            "Primeira Alguma Coisa",
-        ),
-        (
-            "DESC",
-            "Descarte",
-        ),
-        (
-            "LI",
-            "Lítio",
-        ),
-    ]
-
     numero = models.IntegerField(null=False, blank=False)
     nome = models.CharField(max_length=255, null=False, blank=False)
     prefixo = models.CharField(
@@ -42,6 +21,12 @@ class Vaca(models.Model):
     fazenda = models.ForeignKey(
         Fazenda, null=True, blank=True, on_delete=models.SET_NULL
     )
+
+    @property
+    def image_tag(self):
+        from django.utils.html import mark_safe
+
+        return mark_safe(f'<img src="{self.foto.url}" width="75" height="75"/>')
 
 
 class FichaOrdenha(models.Model):
@@ -54,11 +39,6 @@ class FichaOrdenha(models.Model):
 
 
 class Ordenha(models.Model):
-    MANHA = "M"
-    TARDE = "T"
-
-    PERIODO_CHOICES = [(MANHA, "Manhã"), (TARDE, "Tarde")]
-
     periodo = models.CharField(
         max_length=1, choices=PERIODO_CHOICES, null=False, blank=False
     )
@@ -73,13 +53,13 @@ class Ordenha(models.Model):
 class FotoOrdenha(models.Model):
     ficha = models.ForeignKey(
         FichaOrdenha,
-        related_name="images",
+        related_name="fotos",
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
     )
     ordenha = models.ForeignKey(
-        Ordenha, blank=True, null=True, on_delete=models.SET_NULL
+        Ordenha, related_name="fotos", blank=True, null=True, on_delete=models.SET_NULL
     )
     image = models.ImageField()
     linhas = models.ImageField(null=True, blank=True)
