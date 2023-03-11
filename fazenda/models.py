@@ -1,6 +1,6 @@
-from django.db import models
-from django.core.files.storage import FileSystemStorage
 from django.utils import timezone
+from django.utils.safestring import mark_safe
+from django.db import models
 
 from .choices import PREFIXO_CHOICES, PERIODO_CHOICES
 
@@ -24,7 +24,6 @@ class Vaca(models.Model):
 
     @property
     def image_tag(self):
-        from django.utils.html import mark_safe
 
         return mark_safe(f'<img src="{self.foto.url}" width="75" height="75"/>')
 
@@ -57,9 +56,6 @@ class FotoOrdenha(models.Model):
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
-    )
-    ordenha = models.ForeignKey(
-        Ordenha, related_name="fotos", blank=True, null=True, on_delete=models.SET_NULL
     )
     image = models.ImageField()
     linhas = models.ImageField(null=True, blank=True)
