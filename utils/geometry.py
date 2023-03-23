@@ -2,7 +2,9 @@ import numpy as np
 
 import os
 
-GOOGLE_APPLICATION_CREDENTIALS = "/home/arthur/projects/gestao-fazenda/griselda-375011-cloud-vision.json"
+GOOGLE_APPLICATION_CREDENTIALS = (
+    "/home/arthur/projects/gestao-fazenda/griselda-375011-cloud-vision.json"
+)
 
 os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", GOOGLE_APPLICATION_CREDENTIALS)
 
@@ -198,7 +200,7 @@ def get_document_bounds(image_file, feature):
     return bounds
 
 
-def get_bbox(filein) :
+def get_bbox(filein):
     from django.core.files import File
 
     image = Image.open(filein)
@@ -208,16 +210,18 @@ def get_bbox(filein) :
     import io
 
     image_buffer = io.BytesIO()
-    image.save(image_buffer, format='JPEG')
+    image.save(image_buffer, format="JPEG")
 
     image_file = File(image_buffer)
 
     return image_file
 
+
 import io
 import os
 
 from unidecode import unidecode
+
 
 def has_alnum(s):
     for i in s:
@@ -225,9 +229,10 @@ def has_alnum(s):
             return True
     return False
 
-def process_row(row):            
+
+def process_row(row):
     try:
-        num = ' '.join(r.description for r in row[0] if has_alnum(r.description))
+        num = " ".join(r.description for r in row[0] if has_alnum(r.description))
 
         num = num.upper()
 
@@ -249,42 +254,62 @@ def process_row(row):
     except Exception:
         num = None
     try:
-        nome = ' '.join(r.description for r in row[1] if has_alnum(r.description))
+        nome = " ".join(r.description for r in row[1] if has_alnum(r.description))
     except Exception:
-        nome = ''
+        nome = ""
 
     try:
-        p1 = float(''.join(r.description for r in row[2] if has_alnum(r.description)).replace(',','.'))
+        p1 = float(
+            "".join(r.description for r in row[2] if has_alnum(r.description)).replace(
+                ",", "."
+            )
+        )
         while p1 > 40:
             p1 /= 10
     except Exception:
         p1 = None
     try:
-        p2 = float(''.join(r.description for r in row[3] if has_alnum(r.description)).replace(',','.'))
+        p2 = float(
+            "".join(r.description for r in row[3] if has_alnum(r.description)).replace(
+                ",", "."
+            )
+        )
         while p2 > 40:
             p2 /= 10
     except Exception:
         p2 = None
-    return (num, nome, str(p1).replace('.', ','), str(p2).replace('.', ','))
+    return (num, nome, str(p1).replace(".", ","), str(p2).replace(".", ","))
 
 
 def filter_words(annotations: list) -> list:
-    return [annotation for annotation in annotations if '\n' not in annotation.description]
+    return [
+        annotation for annotation in annotations if "\n" not in annotation.description
+    ]
+
 
 def center_y(annotation) -> float:
-    return sum([v.y for v in annotation.bounding_poly.vertices])/len(annotation.bounding_poly.vertices)
+    return sum([v.y for v in annotation.bounding_poly.vertices]) / len(
+        annotation.bounding_poly.vertices
+    )
+
 
 def center_x(annotation) -> float:
-    return sum([v.x for v in annotation.bounding_poly.vertices])/len(annotation.bounding_poly.vertices)
+    return sum([v.x for v in annotation.bounding_poly.vertices]) / len(
+        annotation.bounding_poly.vertices
+    )
+
 
 def sort_vertically(annotations: list) -> list:
     return sorted(annotations, key=lambda annotation: center_y(annotation))
 
+
 def min_y(a):
     return min([v.y for v in a.bounding_poly.vertices])
 
+
 def max_y(a):
     return max([v.y for v in a.bounding_poly.vertices])
+
 
 from Levenshtein import distance
 
@@ -307,28 +332,32 @@ def str_process(s):
     try:
         return remove_prefixes(unidecode(s.upper()))
     except Exception:
-        return ''
+        return ""
+
 
 def closest_string(s, strings):
-    min_s  = min(strings, key=lambda x: distance(str_process(s), str_process(x)))
+    min_s = min(strings, key=lambda x: distance(str_process(s), str_process(x)))
     return min_s, distance(str_process(s), str_process(min_s))
 
 
 def closest_vaca(vaca, vacas):
     num, nome = vaca
     if nome.strip() == "":
-        return ('', '')
+        return ("", "")
     nums, nomes = zip(*vacas)
-    distances  = map(lambda x: (x, distance(str_process(nome), str_process(x[1]))), vacas)
+    distances = map(
+        lambda x: (x, distance(str_process(nome), str_process(x[1]))), vacas
+    )
     distances = list(sorted(distances, key=lambda d: d[1]))
     min_dist = distances[0][1]
     best_matches = [d[0] for d in distances if d[1] == min_dist]
-    best_match  = min(best_matches, key=lambda x: distance(str(num), str(x[0])))
+    best_match = min(best_matches, key=lambda x: distance(str(num), str(x[0])))
     return best_match
 
 
 # Imports the Google Cloud client library
 from google.cloud import vision
+
 
 def get_dataframe(filepath):
     # Instantiates a client
@@ -338,11 +367,10 @@ def get_dataframe(filepath):
     file_name = os.path.abspath(filepath)
 
     # Loads the image into memory
-    with io.open(file_name, 'rb') as image_file:
+    with io.open(file_name, "rb") as image_file:
         content = image_file.read()
 
     image = vision.Image(content=content)
-
 
     from collections import defaultdict
     import numpy as np
@@ -353,12 +381,23 @@ def get_dataframe(filepath):
     annotations = sort_vertically(annotations)
 
     # create a list of bounding box vertices
-    bounding_boxes = [np.array([[v.x, v.y] for v in b.bounding_poly.vertices]) for b in annotations]
+    bounding_boxes = [
+        np.array([[v.x, v.y] for v in b.bounding_poly.vertices]) for b in annotations
+    ]
 
-    heights = [abs(a.bounding_poly.vertices[0].y + a.bounding_poly.vertices[1].y - a.bounding_poly.vertices[2].y - a.bounding_poly.vertices[3].y)/2 for a in annotations]
+    heights = [
+        abs(
+            a.bounding_poly.vertices[0].y
+            + a.bounding_poly.vertices[1].y
+            - a.bounding_poly.vertices[2].y
+            - a.bounding_poly.vertices[3].y
+        )
+        / 2
+        for a in annotations
+    ]
 
     # define a threshold for grouping boxes horizontally
-    threshold = round(sum(heights)/len(heights)/1.2)
+    threshold = round(sum(heights) / len(heights) / 1.2)
 
     # create a dictionary to store the groups of bounding boxes
     groups = defaultdict(list)
@@ -384,11 +423,10 @@ def get_dataframe(filepath):
     rows = []
 
     for key, group in groups.items():
-        row = ' '.join([a.description for a in group])
+        row = " ".join([a.description for a in group])
         rows.append(row)
-        
 
-    min_s, _ = closest_string('nª nome manhã tarde obs', rows)
+    min_s, _ = closest_string("nª nome manhã tarde obs", rows)
 
     from copy import copy
 
@@ -398,10 +436,11 @@ def get_dataframe(filepath):
         if i < rows.index(min_s) + 1:
             del groups[key]
             continue
-        row = ' '.join([a.description for a in sorted(group, key=lambda a: center_x(a))])
+        row = " ".join(
+            [a.description for a in sorted(group, key=lambda a: center_x(a))]
+        )
         new_rows.append(row)
-        #print(f'key[{key}]: {row}')
-
+        # print(f'key[{key}]: {row}')
 
     from sklearn.cluster import KMeans
     import numpy as np
@@ -441,7 +480,6 @@ def get_dataframe(filepath):
     start = 0
     end = img.width
 
-
     for center in sorted(cluster_centers):
         regions.append((start, center[0]))
         start = center[0]
@@ -453,16 +491,27 @@ def get_dataframe(filepath):
     from collections import defaultdict
     import numpy as np
 
-
     new_annotations = list(reversed(sort_vertically(new_annotations)))
 
     # create a list of bounding box vertices
-    bounding_boxes = [np.array([[v.x, v.y] for v in b.bounding_poly.vertices]) for b in new_annotations]
-    
-    widths = [abs(a.bounding_poly.vertices[0].x + a.bounding_poly.vertices[-1].x - a.bounding_poly.vertices[2].x - a.bounding_poly.vertices[1].x)/2 for a in new_annotations]
+    bounding_boxes = [
+        np.array([[v.x, v.y] for v in b.bounding_poly.vertices])
+        for b in new_annotations
+    ]
+
+    widths = [
+        abs(
+            a.bounding_poly.vertices[0].x
+            + a.bounding_poly.vertices[-1].x
+            - a.bounding_poly.vertices[2].x
+            - a.bounding_poly.vertices[1].x
+        )
+        / 2
+        for a in new_annotations
+    ]
 
     # define a threshold for grouping boxes horizontally
-    threshold = round(sum(widths)/len(widths)/1)
+    threshold = round(sum(widths) / len(widths) / 1)
 
     # create a dictionary to store the groups of bounding boxes
     new_groups = defaultdict(list)
@@ -475,7 +524,6 @@ def get_dataframe(filepath):
             if region[0] < center < region[1]:
                 return i
 
-
     # iterate through the bounding boxes and group them horizontally
     for i, box in enumerate(bounding_boxes):
         x_coordinates = [point[0] for point in box]
@@ -485,13 +533,14 @@ def get_dataframe(filepath):
         found_group = False
         new_groups[get_region(center)].append(new_annotations[i])
 
-
     cols = []
 
     for key, group in new_groups.items():
-        col = ' '.join([a.description for a in sorted(group, key=lambda a: (center_y(a)))])
+        col = " ".join(
+            [a.description for a in sorted(group, key=lambda a: (center_y(a)))]
+        )
         cols.append(col)
-        #print(f'key[{key}]: {col}')
+        # print(f'key[{key}]: {col}')
 
     def find_in_groups(obj, groups):
         for i, group in enumerate(groups.values()):
@@ -509,39 +558,32 @@ def get_dataframe(filepath):
             table[row][col] += [annotation]
             table[row][col] = sorted(table[row][col], key=lambda a: center_x(a))
 
-
-            
-            
-            
     import csv
     from unidecode import unidecode
 
     ns = []
     nomes = []
     vacas = []
-    
-    
-    with open("rebanho.csv", 'r') as file:
+
+    with open("rebanho.csv", "r") as file:
         csvreader = csv.reader(file)
         for row in list(csvreader)[1:]:
-            pass #print(row[0], row[1], unidecode(row[1]))
+            pass  # print(row[0], row[1], unidecode(row[1]))
             vacas.append(row)
             ns.append(row[0])
             nomes.append(row[1])
-            
+
     import pandas as pd
 
     df = pd.DataFrame(columns=["Nº", "NOME", "AUTO Nº", "AUTO NOME", "MANHÃ", "TARDE"])
     for i, row in enumerate(table):
-        
-        (num, nome, p1, p2) = process_row(row)
-        
-        auto_num, auto_nome = closest_vaca((num, nome), vacas)
-        
-        
-        df.loc[i,:] = (num, nome, auto_num, auto_nome, p1, p2)
 
-        
+        (num, nome, p1, p2) = process_row(row)
+
+        auto_num, auto_nome = closest_vaca((num, nome), vacas)
+
+        df.loc[i, :] = (num, nome, auto_num, auto_nome, p1, p2)
+
     import pandas as pd
 
     def disimilar(s1, s2):
@@ -550,50 +592,54 @@ def get_dataframe(filepath):
 
         s2 = s2.map(lambda s: str_process(s))
 
-
         return s1 != s2
 
-
     def match(x):
-        name = x.name.replace("AUTO ", "")    
-        return (disimilar(x, df[name])).map({True: 'background-color: yellow; color: black', False: ''})
-
+        name = x.name.replace("AUTO ", "")
+        return (disimilar(x, df[name])).map(
+            {True: "background-color: yellow; color: black", False: ""}
+        )
 
     def select_col(x):
-        red = 'background-color: red'
-        yellow = 'background-color: yellow'
-        c2 = '' 
-        #compare columns
+        red = "background-color: red"
+        yellow = "background-color: yellow"
+        c2 = ""
+        # compare columns
         mask_manha = x["MANHÃ"].map(lambda p: p is None or p > 40 or p <= 0)
         mask_tarde = x["TARDE"].map(lambda p: p is None or p > 40 or p <= 0)
 
         mask_nums = disimilar(x["Nº"], x["AUTO Nº"])
         mask_nomes = disimilar(x["NOME"], x["AUTO NOME"])
 
-
-        #DataFrame with same index and columns names as original filled empty strings
-        df1 =  pd.DataFrame(c2, index=x.index, columns=x.columns)
-        #modify values of df1 column by boolean mask
-        df1.loc[mask_manha, 'MANHÃ'] = yellow
-        df1.loc[mask_tarde, 'TARDE'] = yellow
-        df1.loc[mask_nums, 'AUTO Nº'] = yellow
-        df1.loc[mask_nomes, 'AUTO NOME'] = yellow
+        # DataFrame with same index and columns names as original filled empty strings
+        df1 = pd.DataFrame(c2, index=x.index, columns=x.columns)
+        # modify values of df1 column by boolean mask
+        df1.loc[mask_manha, "MANHÃ"] = yellow
+        df1.loc[mask_tarde, "TARDE"] = yellow
+        df1.loc[mask_nums, "AUTO Nº"] = yellow
+        df1.loc[mask_nomes, "AUTO NOME"] = yellow
         return df1
-    
+
     return df
-    #return df.style.apply(select_col, axis=None)
+    # return df.style.apply(select_col, axis=None)
+
 
 def fix_headers(df):
     import pandas as pd
-    new_df = pd.DataFrame(columns="Nome;Nome;Ord. 1;Ord. 2;Ord. 3;Tot.;Data;Responsável;DEL;Dias sec. prev.;Grupo no controle;Observação;".split(";"))
-    new_df["Nome"] = df["AUTO Nº"] + len(df)*[' '] + df["AUTO NOME"] 
+
+    new_df = pd.DataFrame(
+        columns="Nome;Nome;Ord. 1;Ord. 2;Ord. 3;Tot.;Data;Responsável;DEL;Dias sec. prev.;Grupo no controle;Observação;".split(
+            ";"
+        )
+    )
+    new_df["Nome"] = df["AUTO Nº"] + len(df) * [" "] + df["AUTO NOME"]
     new_df["Ord. 1"] = df["MANHÃ"]
     new_df["Ord. 2"] = df["TARDE"]
     return new_df
 
 
-def get_dewarped(full_path):
-    
+def get_dewarped(full_path, coords=None):
+
     from django.core.files import File
     import cv2
     import numpy as np
@@ -610,10 +656,9 @@ def get_dewarped(full_path):
 
     # Use Hough Transform to detect lines
     for threshold in range(400, 100, -5):
-        lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold, maxLineGap=100)
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold, maxLineGap=100)
         if not lines is None and len(lines) > 20:
             break
-
 
     # Filter out the small lines
     # lines = [line for line in lines if np.sqrt((line[0][0] - line[0][2]) ** 2 + (line[0][1] - line[0][3]) ** 2) > 50]
@@ -637,7 +682,6 @@ def get_dewarped(full_path):
             horizontal_lines.append(endpoint)
         else:
             vertical_lines.append(endpoint)
-
 
     horizontal_lines_orig = np.copy(horizontal_lines)
     # Consider only extreme lines
@@ -669,36 +713,63 @@ def get_dewarped(full_path):
             x2, y2 = horizontal_line[1]
             x3, y3 = vertical_line[0]
             x4, y4 = vertical_line[1]
-            x = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
-            y = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+            x = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / (
+                (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+            )
+            y = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / (
+                (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+            )
             intersections.append([x, y])
             cv2.circle(line_image, (int(x), int(y)), 2, (255, 0, 0), 2)
 
     # Correct order for the transform
-    intersections = [intersections[0], intersections[1], intersections[3], intersections[2]]
+    intersections = [
+        intersections[0],
+        intersections[1],
+        intersections[3],
+        intersections[2],
+    ]
     # mirro the image
-    intersections = [intersections[0], intersections[3], intersections[2], intersections[1]]
+    intersections = [
+        intersections[0],
+        intersections[3],
+        intersections[2],
+        intersections[1],
+    ]
     # rotate the image
-    intersections = [intersections[1], intersections[2], intersections[3], intersections[0]]
+    intersections = [
+        intersections[1],
+        intersections[2],
+        intersections[3],
+        intersections[0],
+    ]
     # # rotate the image
     # intersections = [intersections[1], intersections[2], intersections[3], intersections[0]]
     # # rotate again
     # intersections = [intersections[1], intersections[2], intersections[3], intersections[0]]
 
     # Perspective transform from intersections to a rectangle
-    src = np.array(intersections, dtype='float32')
+    src = np.array(intersections, dtype="float32")
 
     # Define the size of the transformed image
     x1, y1 = 1000, 1000
 
     # Define the four corners of the parallelogram after the transform
-    dst = np.array([[0, 0], [x1, 0], [x1, y1], [0, y1]], dtype='float32')
+    dst = np.array([[0, 0], [x1, 0], [x1, y1], [0, y1]], dtype="float32")
 
     # Calculate the perspective transform matrix
     M = cv2.getPerspectiveTransform(src, dst)
 
     # Put image limits in an array
-    image_limits = np.array([[0, 0], [image.shape[1], 0], [image.shape[1], image.shape[0]], [0, image.shape[0]]], dtype='float32')
+    image_limits = np.array(
+        [
+            [0, 0],
+            [image.shape[1], 0],
+            [image.shape[1], image.shape[0]],
+            [0, image.shape[0]],
+        ],
+        dtype="float32",
+    )
 
     # Transform those limits using the perspective transform matrix
     transformed_limits = cv2.perspectiveTransform(image_limits.reshape(-1, 1, 2), M)
@@ -709,14 +780,19 @@ def get_dewarped(full_path):
     y_min = int(min(transformed_limits[:, 0, 1]))
     y_max = int(max(transformed_limits[:, 0, 1]))
 
-    bounding_box = np.array([[x_min, y_min], [x_max, y_min], [x_max, y_max], [x_min, y_max]], dtype='float32')
+    bounding_box = np.array(
+        [[x_min, y_min], [x_max, y_min], [x_max, y_max], [x_min, y_max]],
+        dtype="float32",
+    )
 
     # Use the inverse perspective transform to get the bounding box in the original image
-    bounding_box_orig = cv2.perspectiveTransform(bounding_box.reshape(-1, 1, 2), np.linalg.inv(M))
+    bounding_box_orig = cv2.perspectiveTransform(
+        bounding_box.reshape(-1, 1, 2), np.linalg.inv(M)
+    )
 
     # Get new perspective transform matrix using your bounding box orig
-    src = np.array(bounding_box_orig, dtype='float32')
-    dst = np.array([[0, 0], [x1, 0], [x1, y1], [0, y1]], dtype='float32')
+    src = np.array(bounding_box_orig, dtype="float32")
+    dst = np.array([[0, 0], [x1, 0], [x1, y1], [0, y1]], dtype="float32")
     M = cv2.getPerspectiveTransform(src, dst)
 
     # Apply the perspective transform to the image
@@ -727,11 +803,12 @@ def get_dewarped(full_path):
     import io
 
     image_buffer = io.BytesIO()
-    dewarped.save(image_buffer, format='JPEG')
+    dewarped.save(image_buffer, format="JPEG")
 
     image_file = File(image_buffer)
 
     return image_file
+
 
 def get_fixed_dataframe(full_path):
     return fix_headers(get_dataframe(full_path))

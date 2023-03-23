@@ -6,6 +6,22 @@ from image_labelling_tool import models as lt_models
 
 from .choices import PREFIXO_CHOICES, PERIODO_CHOICES
 
+from utils.geometry import get_dewarped
+
+
+class Labels(lt_models.Labels):
+    def save(self, *args, **kwargs):
+        if self.labels_json_str == "[]":
+            return super().save(*args, **kwargs)
+        fotoordenha = self.fotoordenha
+        if not fotoordenha.dewarped:
+            coords = None
+            fotoordenha.dewarped = get_dewarped(fotoordenha.original.path, coords)
+        return super().save(*args, **kwargs)
+
+    class Meta:
+        proxy = True
+
 
 class Fazenda(models.Model):
     nome = models.CharField(max_length=255, null=False, blank=False)
@@ -60,8 +76,12 @@ class FotoOrdenha(models.Model):
         null=True,
         on_delete=models.SET_NULL,
     )
-    labels = models.ForeignKey(
-        lt_models.Labels, models.CASCADE, related_name="original", blank=True, null=True
+    labels = models.OneToOneField(
+        Labels,
+        on_delete=models.CASCADE,
+        related_name="fotoordenha",
+        blank=True,
+        null=True,
     )
     original = models.ImageField()
     lines = models.ImageField(null=True, blank=True)
@@ -73,18 +93,26 @@ class FotoOrdenha(models.Model):
         verbose_name_plural = "Fotos de Ordenhas"
 
     def save(self, *args, **kwargs):
+        if not self.labels:
+            self.labels = Labels.objects.create(creation_date=timezone.now())
+
         super().save(*args, **kwargs)
 
         if not self.dewarped:
-            from utils.geometry import get_dewarped
+            try:
+                from utils.geometry import get_dewarped
 
-            full_path = self.original.path
-            image = get_dewarped(full_path)
-            self.dewarped.save(f"dewarped-{self.original.name}", image)
-
+                full_path = self.original.path
+                image = get_dewarped(full_path)
+                self.dewarped.save(f"dewarped-{self.original.name}", image)
+            except Exception:
+                pass
         if not self.bbox:
-            from utils.geometry import get_bbox
+            try:
+                from utils.geometry import get_bbox
 
-            full_path = self.dewarped.path
-            image = get_bbox(full_path)
-            self.bbox.save(f"bbox-{self.original.name}", image)
+                full_path = self.dewarped.path
+                image = get_bbox(full_path)
+                self.bbox.save(f"bbox-{self.original.name}", image)
+            except Exception:
+                pass

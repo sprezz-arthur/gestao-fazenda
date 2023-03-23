@@ -1,4 +1,5 @@
 {% load labelling_tool_tags %}
+{% load admin_urls %}
 
 <!doctype html>
 <html lang="en">
@@ -13,7 +14,7 @@
 
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url "example_labeller:home" %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'admin:fazenda_fotoordenha_change' object_id=fotoordenha_id %}">Admin</a></li>
             <li class="breadcrumb-item active" aria-current="page">Labelling tool</li>
         </ol>
     </nav>

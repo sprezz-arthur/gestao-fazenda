@@ -115,12 +115,21 @@ class FichaOrdenhaAdmin(admin.ModelAdmin):
             return ""
 
 
-from image_labelling_tool import models
+from image_labelling_tool import models as lt_models
 
-admin.site.unregister(models.LabellingTask)
-admin.site.unregister(models.LabellingSchema)
-admin.site.unregister(models.LabellingColourScheme)
-admin.site.unregister(models.LabelClassGroup)
-admin.site.unregister(models.LabelClass)
-admin.site.unregister(models.LabelClassColour)
-admin.site.unregister(models.Labels)
+admin.site.unregister(lt_models.LabellingTask)
+admin.site.unregister(lt_models.LabellingSchema)
+admin.site.unregister(lt_models.LabellingColourScheme)
+admin.site.unregister(lt_models.LabelClassGroup)
+admin.site.unregister(lt_models.LabelClass)
+admin.site.unregister(lt_models.LabelClassColour)
+admin.site.unregister(lt_models.Labels)
+
+
+lt_models.Labels._meta.verbose_name_plural = "Label Sets"
+lt_models.Labels._meta.verbose_name = "Label Set"
+
+
+@admin.register(lt_models.Labels)
+class LabelsAdmin(admin.ModelAdmin):
+    ...
