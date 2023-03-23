@@ -1,6 +1,8 @@
 from django.utils import timezone
 from django.utils.safestring import mark_safe
-from django.db import models
+from django.contrib.gis.db import models
+
+from image_labelling_tool import models as lt_models
 
 from .choices import PREFIXO_CHOICES, PERIODO_CHOICES
 
@@ -24,8 +26,10 @@ class Vaca(models.Model):
 
     @property
     def image_tag(self):
-
-        return mark_safe(f'<img src="{self.foto.url}" width="75" height="75"/>')
+        try:
+            return mark_safe(f'<img src="{self.foto.url}" width="75" height="75"/>')
+        except Exception:
+            return ""
 
 
 class FichaOrdenha(models.Model):
@@ -50,17 +54,37 @@ class Ordenha(models.Model):
 
 
 class FotoOrdenha(models.Model):
-    ficha = models.ForeignKey(
+    ficha = models.OneToOneField(
         FichaOrdenha,
-        related_name="fotos",
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
     )
-    image = models.ImageField()
-    linhas = models.ImageField(null=True, blank=True)
+    labels = models.ForeignKey(
+        lt_models.Labels, models.CASCADE, related_name="original", blank=True, null=True
+    )
+    original = models.ImageField()
+    lines = models.ImageField(null=True, blank=True)
+    dewarped = models.ImageField(null=True, blank=True)
     bbox = models.ImageField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Foto de Ordenhas"
         verbose_name_plural = "Fotos de Ordenhas"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if not self.dewarped:
+            from utils.geometry import get_dewarped
+
+            full_path = self.original.path
+            image = get_dewarped(full_path)
+            self.dewarped.save(f"dewarped-{self.original.name}", image)
+
+        if not self.bbox:
+            from utils.geometry import get_bbox
+
+            full_path = self.dewarped.path
+            image = get_bbox(full_path)
+            self.bbox.save(f"bbox-{self.original.name}", image)

@@ -1,0 +1,6 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+  {{ block.super }}
+  <a href="{% url 'example_labeller:labelling_tool_api' %}" class="btn btn-block btn-secondary btn-sm">Labeller</a>
+{% endblock %}

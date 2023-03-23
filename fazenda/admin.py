@@ -1,5 +1,7 @@
+from django.utils.safestring import mark_safe
 from django.contrib import admin
-from fazenda import models
+
+from . import models
 
 
 @admin.register(models.Fazenda)
@@ -15,6 +17,9 @@ class OrdenhaAdmin(admin.ModelAdmin):
 @admin.register(models.Vaca)
 class VacaAdmin(admin.ModelAdmin):
     list_display = ["zero_numero", "prefixo", "nome", "image_tag"]
+    search_fields = ["nome", "numero"]
+    ordering = ["numero"]
+    list_filter = ["prefixo"]
 
     @admin.display(description="Número")
     def zero_numero(self, obj):
@@ -26,37 +31,96 @@ class ImageInline(admin.StackedInline):
     model = models.FotoOrdenha
 
 
+from . import widgets
+from django.db.models import ImageField
+
+
 @admin.register(models.FotoOrdenha)
 class FotoOrdenhaAdmin(admin.ModelAdmin):
-    pass
+
+    list_display = [
+        "pk",
+        "original_thumbnail",
+        "dewarped_thumbnail",
+        "lines_thumbnail",
+        "bbox_thumbnail",
+    ]
+
+    change_form_template = "admin/change_form.html"
+
+    @admin.display(description="Original")
+    def original_thumbnail(self, obj):
+        try:
+            return mark_safe(
+                f'<a href="{obj.original.url}"><img src="{obj.original.url}" height="300"/></a>'
+            )
+        except Exception:
+            return ""
+
+    @admin.display(description="Lines")
+    def lines_thumbnail(self, obj):
+        try:
+            return mark_safe(
+                f'<a href="{obj.lines.url}"><img src="{obj.lines.url}" height="300"/></a>'
+            )
+        except Exception:
+            return ""
+
+    @admin.display(description="Dewarped")
+    def dewarped_thumbnail(self, obj):
+        try:
+            return mark_safe(
+                f'<a href="{obj.dewarped.url}"><img src="{obj.dewarped.url}" height="300"/></a>'
+            )
+        except Exception:
+            return ""
+
+    @admin.display(description="Bounding Boxes")
+    def bbox_thumbnail(self, obj):
+        try:
+            return mark_safe(
+                f'<a href="{obj.bbox.url}"><img src="{obj.bbox.url}" height="300"/></a>'
+            )
+        except Exception:
+            return ""
 
 
 @admin.register(models.FichaOrdenha)
 class FichaOrdenhaAdmin(admin.ModelAdmin):
     inlines = [ImageInline]
-    readonly_fields = ["image", "linhas", "bbox"]
-    list_display = ["data", "image", "linhas", "bbox"]
+    list_display = ["data", "image"]
 
     @admin.display(description="Foto")
     def image(self, obj):
         try:
-            return obj.fotos.first().image.url
+            return obj.fotoordenha.original.url
         except models.FotoOrdenha.DoesNotExist:
             return ""
 
     @admin.display(description="Linhas")
     def linhas(self, obj):
         try:
-            oxe = obj.fotos.first()
+            oxe = obj.fotoordenha
             diro = dir(oxe)
-            linhas = obj.fotos.first().linhas
-            return obj.fotos.first().linhas.url
+            linhas = obj.fotoordenha.linhas
+            return obj.fotoordenha.linhas.url
         except (models.FotoOrdenha.DoesNotExist, ValueError):
             return ""
 
     @admin.display(description="Bounding Boxes")
     def bbox(self, obj):
         try:
-            return obj.fotos.first().bbox.url
+            return obj.fotoordenha.bbox.url
         except (models.FotoOrdenha.DoesNotExist, ValueError):
             return ""
+
+
+from image_labelling_tool import models
+
+admin.site.unregister(models.LabellingTask)
+admin.site.unregister(models.LabellingSchema)
+admin.site.unregister(models.LabellingColourScheme)
+admin.site.unregister(models.LabelClassGroup)
+admin.site.unregister(models.LabelClass)
+admin.site.unregister(models.LabelClassColour)
+admin.site.unregister(models.Labels)

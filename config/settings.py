@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
 from pathlib import Path
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,8 +25,10 @@ SECRET_KEY = "django-insecure-vf2s+b%2=pn+=-2%12rjxv5@19dl**mk$-!&nsya10ppxvp!$$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["fazenda.sprezz.fr"]
+CSRF_TRUSTED_ORIGINS = ["https://fazenda.sprezz.fr"]
 
+INTERNAL_IPS = ["127.0.0.1", "https://fazenda.sprezz.fr"]
 
 # Application definition
 
@@ -40,10 +42,19 @@ INSTALLED_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "image_labelling_tool",
+    "floppyforms",
+    "leaflet",
     "jazzmin",
     "django_extensions",
     "debug_toolbar",
 ]
+
+from easy_thumbnails.conf import Settings as thumbnail_settings
+
+THUMBNAIL_PROCESSORS = (
+    "image_cropping.thumbnail_processors.crop_corners",
+) + thumbnail_settings.THUMBNAIL_PROCESSORS
 
 MY_APPS = [
     "fazenda",
@@ -63,12 +74,14 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+WAGTAIL_SITE_NAME = "My Example Site"
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates", BASE_DIR / "fazenda/templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -94,6 +107,8 @@ DATABASES = {
     }
 }
 
+SPATIALITE_LIBRARY_PATH = "/usr/lib/x86_64-linux-gnu/mod_spatialite.so"
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -117,7 +132,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-LANGUAGE_CODE = "pt-br"
+LANGUAGE_CODE = "fr"
 
 TIME_ZONE = "UTC"
 
@@ -133,9 +148,9 @@ STATIC_URL = "static/"
 
 STATIC_ROOT = "static/"
 
-MEDIA_URL = "midia/"
+MEDIA_URL = "/media/"
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "midia")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 STATICFILES_DIRS = [
     ("fazenda", STATIC_ROOT + "fazenda"),
@@ -146,6 +161,14 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+def show_toolbar(request):
+    return True
+
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": show_toolbar,
+}
 
 JAZZMIN_UI_TWEAKS = {}
 
@@ -165,7 +188,8 @@ JAZZMIN_SETTINGS = {
     # Relative path to a favicon for your site, will default to site_logo if absent (ideally 32x32 px)
     "site_icon": None,
     # Welcome text on the login screen
-    "welcome_sign": "Bem-vindo à Griselda!",
+    "welcome_sign": _("Bienvenu à Griselda!"),
+    "goodbye_sign": _("À la prochaine!"),
     # Copyright on the footer
     "copyright": "COPYRIGHT",
     # List of model admins to search from the search bar, search bar omitted if excluded
@@ -186,10 +210,13 @@ JAZZMIN_SETTINGS = {
             "url": "https://github.com/farridav/django-jazzmin/issues",
             "new_window": True,
         },
+        {
+            "name": "Labeller",
+            "url": "https://fazenda.sprezz.fr/labeller",
+            "new_window": False,
+        },
         # model admin to link to (Permissions checked against model)
         {"model": "auth.User"},
-        # App with dropdown menu to all its models pages (Permissions checked against models)
-        {"app": "books"},
     ],
     #############
     # User Menu #
@@ -234,7 +261,7 @@ JAZZMIN_SETTINGS = {
     # Whether to link font from fonts.googleapis.com (use custom_css to supply font otherwise)
     "use_google_fonts_cdn": True,
     # Whether to show the UI customizer on the sidebar
-    "show_ui_builder": False,
+    "show_ui_builder": True,
     ###############
     # Change view #
     ###############
@@ -244,10 +271,139 @@ JAZZMIN_SETTINGS = {
     # - vertical_tabs
     # - collapsible
     # - carousel
-    "changeform_format": "horizontal_tabs",
+    "changeform_format": "vertical_tabs",
     # override change forms on a per modeladmin basis
     "changeform_format_overrides": {
         "auth.user": "collapsible",
         "auth.group": "vertical_tabs",
     },
 }
+
+# Configuration
+LABELLING_TOOL_CONFIG = {
+    "useClassSelectorPopup": True,
+    "tools": {
+        "imageSelector": True,
+        "labelClassSelector": True,
+        "brushSelect": True,
+        "labelClassFilter": True,
+        "drawPointLabel": False,
+        "drawBoxLabel": True,
+        "drawOrientedEllipseLabel": True,
+        "drawPolyLabel": True,
+        "deleteLabel": True,
+        "deleteConfig": {
+            "typePermissions": {
+                "point": True,
+                "box": True,
+                "polygon": True,
+                "composite": True,
+                "group": True,
+            }
+        },
+    },
+    "settings": {
+        "brushWheelRate": 0.025,  # Change rate for brush radius (mouse wheel)
+        "brushKeyRate": 2.0,  # Change rate for brush radius (keyboard)
+    },
+}
+
+LABELLING_TOOL_ENABLE_LOCKING = False
+LABELLING_TOOL_DEXTR_AVAILABLE = False
+LABELLING_TOOL_DEXTR_POLLING_INTERVAL = 1000
+LABELLING_TOOL_DEXTR_WEIGHTS_PATH = None
+
+
+LABELLING_TOOL_EXTERNAL_LABEL_API = False
+LABELLING_TOOL_EXTERNAL_LABEL_API_URL = "http://localhost:3000/get_labels"
+
+
+CELERY_BROKER_URL = "amqp://guest@localhost//"
+CELERY_RESULT_BACKEND = "rpc://"
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+
+from image_labelling_tool import labelling_tool
+
+ANNO_CONTROLS = [
+    labelling_tool.AnnoControlCheckbox(
+        "good_quality", "Good quality", visibility_label_text="Filter by good quality"
+    ),
+    labelling_tool.AnnoControlRadioButtons(
+        "visibility",
+        "Visible",
+        choices=[
+            labelling_tool.AnnoControlRadioButtons.choice(
+                value="full", label_text="Fully", tooltip="Object is fully visible"
+            ),
+            labelling_tool.AnnoControlRadioButtons.choice(
+                value="mostly", label_text="Mostly", tooltip="Object is mostly visible"
+            ),
+            labelling_tool.AnnoControlRadioButtons.choice(
+                value="obscured",
+                label_text="Obscured",
+                tooltip="Object is significantly obscured",
+            ),
+        ],
+        label_on_own_line=False,
+        visibility_label_text="Filter by visibility",
+    ),
+    labelling_tool.AnnoControlPopupMenu(
+        "material",
+        "Material",
+        groups=[
+            labelling_tool.AnnoControlPopupMenu.group(
+                label_text="Artifical/buildings",
+                choices=[
+                    labelling_tool.AnnoControlPopupMenu.choice(
+                        value="concrete",
+                        label_text="Concrete",
+                        tooltip="Concrete objects",
+                    ),
+                    labelling_tool.AnnoControlPopupMenu.choice(
+                        value="plastic", label_text="Plastic", tooltip="Plastic objects"
+                    ),
+                    labelling_tool.AnnoControlPopupMenu.choice(
+                        value="asphalt",
+                        label_text="Asphalt",
+                        tooltip="Road, pavement, etc.",
+                    ),
+                ],
+            ),
+            labelling_tool.AnnoControlPopupMenu.group(
+                label_text="Flat natural",
+                choices=[
+                    labelling_tool.AnnoControlPopupMenu.choice(
+                        value="grass",
+                        label_text="Grass",
+                        tooltip="Grass covered ground",
+                    ),
+                    labelling_tool.AnnoControlPopupMenu.choice(
+                        value="water", label_text="Water", tooltip="Water/lake"
+                    ),
+                ],
+            ),
+            labelling_tool.AnnoControlPopupMenu.group(
+                label_text="Vegetation",
+                choices=[
+                    labelling_tool.AnnoControlPopupMenu.choice(
+                        value="trees", label_text="Trees", tooltip="Trees"
+                    ),
+                    labelling_tool.AnnoControlPopupMenu.choice(
+                        value="shrubbery", label_text="Shrubs", tooltip="Shrubs/bushes"
+                    ),
+                    labelling_tool.AnnoControlPopupMenu.choice(
+                        value="flowers", label_text="Flowers", tooltip="Flowers"
+                    ),
+                    labelling_tool.AnnoControlPopupMenu.choice(
+                        value="ivy", label_text="Ivy", tooltip="Ivy"
+                    ),
+                ],
+            ),
+        ],
+        visibility_label_text="Filter by material",
+    ),
+    # labelling_tool.AnnoControlText('comment', 'Comment', multiline=False),
+]
