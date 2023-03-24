@@ -1,6 +1,9 @@
 from django.utils.safestring import mark_safe
 from django.contrib import admin
+from django.utils.safestring import mark_safe
+from django.db.models import ImageField
 
+from . import widgets
 from . import models
 
 
@@ -30,9 +33,9 @@ class ImageInline(admin.StackedInline):
     extra = 0
     model = models.FotoOrdenha
 
-
-from . import widgets
-from django.db.models import ImageField
+    formfield_overrides = {
+        ImageField: {"widget": widgets.AdminImageWidget},
+    }
 
 
 @admin.register(models.FotoOrdenha)
@@ -45,6 +48,10 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
         "lines_thumbnail",
         "bbox_thumbnail",
     ]
+
+    formfield_overrides = {
+        ImageField: {"widget": widgets.AdminImageWidget},
+    }
 
     change_form_template = "admin/change_form.html"
 
@@ -95,16 +102,6 @@ class FichaOrdenhaAdmin(admin.ModelAdmin):
         try:
             return obj.fotoordenha.original.url
         except models.FotoOrdenha.DoesNotExist:
-            return ""
-
-    @admin.display(description="Linhas")
-    def linhas(self, obj):
-        try:
-            oxe = obj.fotoordenha
-            diro = dir(oxe)
-            linhas = obj.fotoordenha.linhas
-            return obj.fotoordenha.linhas.url
-        except (models.FotoOrdenha.DoesNotExist, ValueError):
             return ""
 
     @admin.display(description="Bounding Boxes")

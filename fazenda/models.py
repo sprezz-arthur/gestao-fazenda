@@ -6,8 +6,6 @@ from image_labelling_tool import models as lt_models
 
 from .choices import PREFIXO_CHOICES, PERIODO_CHOICES
 
-from utils.geometry import get_dewarped
-
 
 class Labels(lt_models.Labels):
     def save(self, *args, **kwargs):
@@ -39,6 +37,12 @@ class Vaca(models.Model):
     fazenda = models.ForeignKey(
         Fazenda, null=True, blank=True, on_delete=models.SET_NULL
     )
+
+    class Meta:
+        unique_together = (
+            "numero",
+            "nome",
+        )
 
     @property
     def image_tag(self):
@@ -84,7 +88,6 @@ class FotoOrdenha(models.Model):
         null=True,
     )
     original = models.ImageField()
-    lines = models.ImageField(null=True, blank=True)
     dewarped = models.ImageField(null=True, blank=True)
     bbox = models.ImageField(null=True, blank=True)
 
@@ -107,7 +110,8 @@ class FotoOrdenha(models.Model):
                 self.dewarped.save(f"dewarped-{self.original.name}", image)
             except Exception:
                 pass
-        if not self.bbox:
+
+        if not self.bbox and self.dewarped:
             try:
                 from utils.geometry import get_bbox
 

@@ -656,7 +656,7 @@ def get_dewarped(full_path, coords=None):
 
     # Use Hough Transform to detect lines
     for threshold in range(400, 100, -5):
-        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold, maxLineGap=100)
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 360, threshold, maxLineGap=100)
         if not lines is None and len(lines) > 20:
             break
 
@@ -798,6 +798,7 @@ def get_dewarped(full_path, coords=None):
     # Apply the perspective transform to the image
     dewarped = cv2.warpPerspective(image, M, (x1, y1))
 
+    dewarped = cv2.cvtColor(dewarped, cv2.COLOR_BGR2RGB)
     dewarped = Image.fromarray(dewarped)
 
     import io
@@ -808,7 +809,6 @@ def get_dewarped(full_path, coords=None):
     image_file = File(image_buffer)
 
     return image_file
-
 
 def get_fixed_dataframe(full_path):
     return fix_headers(get_dataframe(full_path))

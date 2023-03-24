@@ -132,7 +132,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-LANGUAGE_CODE = "fr"
+LANGUAGE_CODE = "pt-br"
 
 TIME_ZONE = "UTC"
 
@@ -405,5 +405,4 @@ ANNO_CONTROLS = [
         ],
         visibility_label_text="Filter by material",
     ),
-    # labelling_tool.AnnoControlText('comment', 'Comment', multiline=False),
 ]

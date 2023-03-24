@@ -1,20 +1,18 @@
-from django.forms.widgets import ClearableFileInput
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-class ImageWithPointsWidget(ClearableFileInput):
-    template_name = 'image_with_dots_widget.html'
+from django.contrib.admin.widgets import AdminFileWidget
 
+
+class AdminImageWidget(AdminFileWidget):
     def render(self, name, value, attrs=None, renderer=None):
-        html = super().render(name, value, attrs, renderer)
-        if value and hasattr(value, "url"):
+        output = []
+        if value and getattr(value, "url", None):
             image_url = value.url
-            html += format_html(
-                '<img src="{}" onclick="handleImageClick(event)" />', image_url
+            file_name = str(value)
+            output.append(
+                '<a href="{}" target="_blank"><img src="{}" alt="{}" style="max-height: 200px;"/></a>'.format(
+                    image_url, image_url, file_name
+                )
             )
-        return mark_safe(html)
-
-    def get_dots(self, value):
-        # Implement your logic to get the dots data for the image
-        # and return it as an HTML string
-        pass
+        output.append(super().render(name, value, attrs))
+        return mark_safe("".join(output))
