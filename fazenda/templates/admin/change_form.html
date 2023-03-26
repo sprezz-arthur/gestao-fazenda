@@ -2,5 +2,6 @@
 
 {% block object-tools-items %}
   {{ block.super }}
+  <a href="{% url 'example_labeller:tool' original.pk %}" class="btn btn-block btn-secondary btn-sm">Recortar</a>
   <a href="{% url 'example_labeller:tool' original.pk %}" class="btn btn-block btn-secondary btn-sm">Labeller</a>
 {% endblock %}

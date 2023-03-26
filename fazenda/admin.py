@@ -15,7 +15,12 @@ class FazendaAdmin(admin.ModelAdmin):
 
 @admin.register(models.Ordenha)
 class OrdenhaAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["numero", "nome", "peso_manha", "peso_tarde"]
+
+
+@admin.register(models.OrdenhaDetectada)
+class OrdenhaDetectadaAdmin(admin.ModelAdmin):
+    list_display = ["numero", "nome", "peso_manha", "peso_tarde"]
 
 
 @admin.register(models.Vaca)
@@ -33,10 +38,32 @@ class VacaAdmin(admin.ModelAdmin):
 class ImageInline(admin.StackedInline):
     extra = 0
     model = models.FotoOrdenha
+    
+    exclude = ["labels", "bounds"]
+
+    template = "admin/inline/stacked.html"
 
     formfield_overrides = {
         ImageField: {"widget": widgets.AdminImageWidget},
     }
+
+
+class OrdenhaInline(admin.StackedInline):
+    extra = 0
+    model = models.Ordenha
+    
+    template = "admin/inline/stacked.html"
+
+
+
+class OrdenhaDetectadaInline(admin.StackedInline):
+    extra = 0
+    model = models.OrdenhaDetectada
+    
+    readonly_fields = ["numero", "nome", "peso_manha", "peso_tarde"]
+    
+    template = "admin/inline/stacked.html"
+
 
 
 @admin.register(models.FotoOrdenha)
@@ -65,20 +92,20 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
         except Exception:
             return ""
 
-    @admin.display(description="Lines")
-    def lines_thumbnail(self, obj):
-        try:
-            return mark_safe(
-                f'<a href="{obj.lines.url}"><img src="{obj.lines.url}" height="300"/></a>'
-            )
-        except Exception:
-            return ""
-
     @admin.display(description="Dewarped")
     def dewarped_thumbnail(self, obj):
         try:
             return mark_safe(
                 f'<a href="{obj.dewarped.url}"><img src="{obj.dewarped.url}" height="300"/></a>'
+            )
+        except Exception:
+            return ""
+
+    @admin.display(description="Contour")
+    def dewarped_contour_thumbnail(self, obj):
+        try:
+            return mark_safe(
+                f'<a href="{obj.dewarped_contour.url}"><img src="{obj.dewarped_contour.url}" height="300"/></a>'
             )
         except Exception:
             return ""
@@ -92,10 +119,19 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
         except Exception:
             return ""
 
+    @admin.display(description="Bounding Boxes Contour")
+    def bbox_contour_thumbnail(self, obj):
+        try:
+            return mark_safe(
+                f'<a href="{obj.bbox_contour.url}"><img src="{obj.bbox_contour.url}" height="300"/></a>'
+            )
+        except Exception:
+            return ""
+
 
 @admin.register(models.FichaOrdenha)
 class FichaOrdenhaAdmin(admin.ModelAdmin):
-    inlines = [ImageInline]
+    inlines = [ImageInline, OrdenhaInline, OrdenhaDetectadaInline]
     list_display = ["data", "image"]
 
     @admin.display(description="Foto")

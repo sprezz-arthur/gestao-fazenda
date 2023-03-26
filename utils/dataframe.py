@@ -2,6 +2,7 @@ import numpy as np
 
 import os
 
+
 GOOGLE_APPLICATION_CREDENTIALS = (
     "/home/arthur/projects/gestao-fazenda/griselda-375011-cloud-vision.json"
 )
@@ -288,7 +289,7 @@ def process_row(row):
             p2 /= 10
     except Exception:
         p2 = None
-    return (num, nome, str(p1).replace(".", ","), str(p2).replace(".", ","))
+    return (num, nome, p1, p2)
 
 
 def filter_words(annotations: list) -> list:
@@ -365,19 +366,55 @@ def closest_vaca(vaca, vacas):
     return best_match
 
 
-# Imports the Google Cloud client library
-from google.cloud import vision
+import pandas as pd
 
 
-def get_dataframe(filepath):
+def disimilar(s1, s2):
+
+    s1 = s1.map(lambda s: str_process(s))
+
+    s2 = s2.map(lambda s: str_process(s))
+
+    return s1 != s2
+
+
+def match(x):
+    name = x.name.replace("AUTO ", "")
+    return (disimilar(x, df[name])).map(
+        {True: "background-color: yellow; color: black", False: ""}
+    )
+
+
+def select_col(x):
+    red = "background-color: red"
+    yellow = "background-color: yellow"
+    c2 = ""
+    # compare columns
+    mask_manha = x["MANHÃ"].map(lambda p: p is None or p > 40 or p <= 0)
+    mask_tarde = x["TARDE"].map(lambda p: p is None or p > 40 or p <= 0)
+
+    mask_nums = disimilar(x["Nº"], x["AUTO Nº"])
+    mask_nomes = disimilar(x["NOME"], x["AUTO NOME"])
+
+    # DataFrame with same index and columns names as original filled empty strings
+    df1 = pd.DataFrame(c2, index=x.index, columns=x.columns)
+    # modify values of df1 column by boolean mask
+    df1.loc[mask_manha, "MANHÃ"] = yellow
+    df1.loc[mask_tarde, "TARDE"] = yellow
+    df1.loc[mask_nums, "AUTO Nº"] = yellow
+    df1.loc[mask_nomes, "AUTO NOME"] = yellow
+    return df1
+
+
+def get_table(filepath):
+    # Imports the Google Cloud client library
+    from google.cloud import vision
+
     # Instantiates a client
     client = vision.ImageAnnotatorClient()
 
-    # The name of the image file to annotate
-    file_name = os.path.abspath(filepath)
-
     # Loads the image into memory
-    with io.open(file_name, "rb") as image_file:
+    with io.open(filepath, "rb") as image_file:
         content = image_file.read()
 
     image = vision.Image(content=content)
@@ -436,21 +473,7 @@ def get_dataframe(filepath):
         row = " ".join([a.description for a in group])
         rows.append(row)
 
-    min_s, _ = closest_string("nª nome manhã tarde obs", rows)
-
     from copy import copy
-
-    new_rows = []
-
-    for i, (key, group) in enumerate(copy(groups).items()):
-        if i < rows.index(min_s) + 1:
-            del groups[key]
-            continue
-        row = " ".join(
-            [a.description for a in sorted(group, key=lambda a: center_x(a))]
-        )
-        new_rows.append(row)
-        # print(f'key[{key}]: {row}')
 
     from sklearn.cluster import KMeans
     import numpy as np
@@ -571,360 +594,11 @@ def get_dataframe(filepath):
     import csv
     from unidecode import unidecode
 
-    ns = []
-    nomes = []
     vacas = []
 
     with open("rebanho.csv", "r") as file:
         csvreader = csv.reader(file)
         for row in list(csvreader)[1:]:
-            pass  # print(row[0], row[1], unidecode(row[1]))
             vacas.append(row)
-            ns.append(row[0])
-            nomes.append(row[1])
 
-    import pandas as pd
-
-    df = pd.DataFrame(columns=["Nº", "NOME", "AUTO Nº", "AUTO NOME", "MANHÃ", "TARDE"])
-    for i, row in enumerate(table):
-
-        (num, nome, p1, p2) = process_row(row)
-
-        auto_num, auto_nome = closest_vaca((num, nome), vacas)
-
-        df.loc[i, :] = (num, nome, auto_num, auto_nome, p1, p2)
-
-    import pandas as pd
-
-    def disimilar(s1, s2):
-
-        s1 = s1.map(lambda s: str_process(s))
-
-        s2 = s2.map(lambda s: str_process(s))
-
-        return s1 != s2
-
-    def match(x):
-        name = x.name.replace("AUTO ", "")
-        return (disimilar(x, df[name])).map(
-            {True: "background-color: yellow; color: black", False: ""}
-        )
-
-    def select_col(x):
-        red = "background-color: red"
-        yellow = "background-color: yellow"
-        c2 = ""
-        # compare columns
-        mask_manha = x["MANHÃ"].map(lambda p: p is None or p > 40 or p <= 0)
-        mask_tarde = x["TARDE"].map(lambda p: p is None or p > 40 or p <= 0)
-
-        mask_nums = disimilar(x["Nº"], x["AUTO Nº"])
-        mask_nomes = disimilar(x["NOME"], x["AUTO NOME"])
-
-        # DataFrame with same index and columns names as original filled empty strings
-        df1 = pd.DataFrame(c2, index=x.index, columns=x.columns)
-        # modify values of df1 column by boolean mask
-        df1.loc[mask_manha, "MANHÃ"] = yellow
-        df1.loc[mask_tarde, "TARDE"] = yellow
-        df1.loc[mask_nums, "AUTO Nº"] = yellow
-        df1.loc[mask_nomes, "AUTO NOME"] = yellow
-        return df1
-
-    return df
-    # return df.style.apply(select_col, axis=None)
-
-
-def fix_headers(df):
-    import pandas as pd
-
-    new_df = pd.DataFrame(
-        columns="Nome;Nome;Ord. 1;Ord. 2;Ord. 3;Tot.;Data;Responsável;DEL;Dias sec. prev.;Grupo no controle;Observação;".split(
-            ";"
-        )
-    )
-    new_df["Nome"] = df["AUTO Nº"] + len(df) * [" "] + df["AUTO NOME"]
-    new_df["Ord. 1"] = df["MANHÃ"]
-    new_df["Ord. 2"] = df["TARDE"]
-    return new_df
-
-
-def order_vertices_clockwise(polygon_data):
-    # extract the vertices from the polygon data
-    vertices = polygon_data["regions"][0][:4]
-
-    # find the upper left vertex
-    upper_left = min(vertices, key=lambda vertex: vertex["y"] + vertex["x"])
-    upper_right = min(vertices, key=lambda vertex: vertex["y"] - vertex["x"])
-    lower_right = max(vertices, key=lambda vertex: vertex["y"] + vertex["x"])
-    lower_left = max(vertices, key=lambda vertex: vertex["y"] - vertex["x"])
-
-    sorted_vertices = [upper_left, upper_right, lower_right, lower_left]
-
-    return [[p["x"], p["y"]] for p in sorted_vertices]
-
-
-def get_dewarped_auto(full_path):
-    from django.core.files import File
-    import cv2
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    image = cv2.imread(full_path)
-
-    from django.core.files import File
-    import cv2
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    # Load the image
-    image = cv2.imread(full_path)
-
-    # Convert the image to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Use Canny Edge Detection to find edges
-    edges = cv2.Canny(gray, 50, 150)
-
-    # Use Hough Transform to detect lines
-    for threshold in range(400, 100, -5):
-        lines = cv2.HoughLinesP(edges, 1, np.pi / 360, threshold, maxLineGap=100)
-        if not lines is None and len(lines) > 20:
-            break
-
-    # Filter out the small lines
-    # lines = [line for line in lines if np.sqrt((line[0][0] - line[0][2]) ** 2 + (line[0][1] - line[0][3]) ** 2) > 50]
-
-    # Create a copy of the image to draw the lines on
-    line_image = np.copy(image)
-
-    # Get the endpoints of all the lines
-    endpoints = []
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
-        endpoints.append([[x1, y1], [x2, y2]])
-
-    # Differentiate between horizontal and vertical lines
-    horizontal_lines = []
-    vertical_lines = []
-    for endpoint in endpoints:
-        x1, y1 = endpoint[0]
-        x2, y2 = endpoint[1]
-        if abs(x2 - x1) > abs(y2 - y1):
-            horizontal_lines.append(endpoint)
-        else:
-            vertical_lines.append(endpoint)
-
-    horizontal_lines_orig = np.copy(horizontal_lines)
-    # Consider only extreme lines
-    highest_horizontal_line = max(horizontal_lines, key=lambda x: x[0][1])
-    lowest_horizontal_line = min(horizontal_lines, key=lambda x: x[0][1])
-    leftmost_vertical_line = min(vertical_lines, key=lambda x: x[0][0])
-    rightmost_vertical_line = max(vertical_lines, key=lambda x: x[0][0])
-
-    horizontal_lines = [highest_horizontal_line, lowest_horizontal_line]
-    vertical_lines = [leftmost_vertical_line, rightmost_vertical_line]
-
-    # Draw the horizontal lines in red
-    for endpoint in horizontal_lines:
-        x1, y1 = endpoint[0]
-        x2, y2 = endpoint[1]
-        cv2.line(line_image, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
-    # Draw the vertical lines in green
-    for endpoint in vertical_lines:
-        x1, y1 = endpoint[0]
-        x2, y2 = endpoint[1]
-        cv2.line(line_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
-    intersections = []
-    # Get intersection points and draw them in blue
-    for horizontal_line in horizontal_lines:
-        for vertical_line in vertical_lines:
-            x1, y1 = horizontal_line[0]
-            x2, y2 = horizontal_line[1]
-            x3, y3 = vertical_line[0]
-            x4, y4 = vertical_line[1]
-            x = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / (
-                (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-            )
-            y = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / (
-                (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-            )
-            intersections.append([x, y])
-            cv2.circle(line_image, (int(x), int(y)), 2, (255, 0, 0), 2)
-
-    # Correct order for the transform
-    intersections = [
-        intersections[0],
-        intersections[1],
-        intersections[3],
-        intersections[2],
-    ]
-    # mirro the image
-    intersections = [
-        intersections[0],
-        intersections[3],
-        intersections[2],
-        intersections[1],
-    ]
-    # rotate the image
-    intersections = [
-        intersections[1],
-        intersections[2],
-        intersections[3],
-        intersections[0],
-    ]
-    # # rotate the image
-    # intersections = [intersections[1], intersections[2], intersections[3], intersections[0]]
-    # # rotate again
-    # intersections = [intersections[1], intersections[2], intersections[3], intersections[0]]
-
-    # Perspective transform from intersections to a rectangle
-    src = np.array(intersections, dtype="float32")
-
-    # Define the size of the transformed image
-    y1, x1, _ = np.shape(image)
-
-    # Define the four corners of the parallelogram after the transform
-    dst = np.array([[0, 0], [x1, 0], [x1, y1], [0, y1]], dtype="float32")
-
-    # Calculate the perspective transform matrix
-    M = cv2.getPerspectiveTransform(src, dst)
-
-    # Put image limits in an array
-    image_limits = np.array(
-        [
-            [0, 0],
-            [image.shape[1], 0],
-            [image.shape[1], image.shape[0]],
-            [0, image.shape[0]],
-        ],
-        dtype="float32",
-    )
-
-    # Transform those limits using the perspective transform matrix
-    transformed_limits = cv2.perspectiveTransform(image_limits.reshape(-1, 1, 2), M)
-
-    # Get bounding box of the transformed limits as points in an array
-    x_min = int(min(transformed_limits[:, 0, 0]))
-    x_max = int(max(transformed_limits[:, 0, 0]))
-    y_min = int(min(transformed_limits[:, 0, 1]))
-    y_max = int(max(transformed_limits[:, 0, 1]))
-
-    bounding_box = np.array(
-        [[x_min, y_min], [x_max, y_min], [x_max, y_max], [x_min, y_max]],
-        dtype="float32",
-    )
-
-    # Use the inverse perspective transform to get the bounding box in the original image
-    bounding_box_orig = cv2.perspectiveTransform(
-        bounding_box.reshape(-1, 1, 2), np.linalg.inv(M)
-    )
-
-    # Get new perspective transform matrix using your bounding box orig
-    src = np.array(bounding_box_orig, dtype="float32")
-    dst = np.array([[0, 0], [x1, 0], [x1, y1], [0, y1]], dtype="float32")
-    M = cv2.getPerspectiveTransform(src, dst)
-
-    # Apply the perspective transform to the image
-    dewarped = cv2.warpPerspective(image, M, (x1, y1))
-
-    dewarped = cv2.cvtColor(dewarped, cv2.COLOR_BGR2RGB)
-    dewarped = Image.fromarray(dewarped)
-
-    import io
-
-    image_buffer = io.BytesIO()
-    dewarped.save(image_buffer, format="JPEG")
-
-    image_file = File(image_buffer)
-
-    return image_file
-
-
-def get_dewarped_poly(full_path, poly):
-    from django.core.files import File
-    import cv2
-    import numpy as np
-
-    image = cv2.imread(full_path)
-
-    y1, x1, _ = np.shape(image)
-    dst = np.array([[0, 0], [x1, 0], [x1, y1], [0, y1]], dtype="float32")
-
-    src = order_vertices_clockwise(poly)
-    src = np.array(src, dtype="float32")
-
-    # Calculate the perspective transform matrix
-    M = cv2.getPerspectiveTransform(src, dst)
-
-    # Put image limits in an array
-    image_limits = np.array(
-        [
-            [0, 0],
-            [image.shape[1], 0],
-            [image.shape[1], image.shape[0]],
-            [0, image.shape[0]],
-        ],
-        dtype="float32",
-    )
-
-    # Transform those limits using the perspective transform matrix
-    transformed_limits = cv2.perspectiveTransform(image_limits.reshape(-1, 1, 2), M)
-
-    # Get bounding box of the transformed limits as points in an array
-    x_min = int(min(transformed_limits[:, 0, 0]))
-    x_max = int(max(transformed_limits[:, 0, 0]))
-    y_min = int(min(transformed_limits[:, 0, 1]))
-    y_max = int(max(transformed_limits[:, 0, 1]))
-
-    # Apply the perspective transform to the image
-    dewarped = cv2.warpPerspective(image, M, (x1, y1))
-
-    cropped = cv2.cvtColor(dewarped, cv2.COLOR_BGR2RGB)
-
-    cropped = Image.fromarray(cropped)
-
-    import io
-
-    image_buffer = io.BytesIO()
-    cropped.save(image_buffer, format="JPEG")
-
-    image_file = File(image_buffer)
-
-    return image_file
-
-
-def get_dewarped(full_path, poly=None):
-    if poly:
-        return get_dewarped_poly(full_path=full_path, poly=poly)
-    return get_dewarped_auto(full_path=full_path)
-
-
-def get_fixed_dataframe(full_path):
-    return fix_headers(get_dataframe(full_path))
-
-
-def get_contour(filein):
-    import cv2
-    from django.core.files import File
-
-    from django.core.files import File
-
-    img = np.array(Image.open(filein))
-
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    (_, binary) = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    closed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
-
-    img = Image.fromarray(closed)
-
-    import io
-
-    image_buffer = io.BytesIO()
-    img.save(image_buffer, format="JPEG")
-
-    image_file = File(image_buffer)
-
-    return image_file
+    return table, vacas

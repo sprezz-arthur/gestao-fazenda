@@ -10,7 +10,7 @@ class AdminImageWidget(AdminFileWidget):
             image_url = value.url
             file_name = str(value)
             output.append(
-                '<a href="{}" target="_blank"><img src="{}" alt="{}" style="max-height: 200px;"/></a>'.format(
+                '<a href="{}" target="_blank"><img src="{}" alt="{}" style="max-height: 300px;"/></a>'.format(
                     image_url, image_url, file_name
                 )
             )
