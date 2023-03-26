@@ -350,3 +350,15 @@ def get_api_labels(request, image_id):
         image.labels.save()
 
     return HttpResponse("success", status=200)
+
+
+from django.urls import reverse
+from django.contrib import messages
+from django.http import HttpResponse, HttpResponseRedirect
+
+from . import models
+
+def detect_ordenhas(request, object_pk):
+    foto = models.FotoOrdenha.objects.get(pk=object_pk)
+    foto.get_ordenha_detectada()
+    return HttpResponseRedirect(reverse("admin:fazenda_ordenhadetectada_changelist", args=[object_pk]) + f"?ficha_id={foto.ficha_id}")

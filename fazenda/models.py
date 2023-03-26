@@ -176,6 +176,8 @@ class FotoOrdenha(models.Model):
             (num, nome, p1, p2) = process_row(row)
 
             
+            print(num, nome, p1, p2)
+
             ordenha = Ordenha.objects.create(ficha=self.ficha)
 
             OrdenhaDetectada.objects.create(

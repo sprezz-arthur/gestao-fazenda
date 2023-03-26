@@ -129,9 +129,10 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
             return ""
 
 
+
 @admin.register(models.FichaOrdenha)
 class FichaOrdenhaAdmin(admin.ModelAdmin):
-    inlines = [ImageInline, OrdenhaInline, OrdenhaDetectadaInline]
+    inlines = [ImageInline]
     list_display = ["data", "image"]
 
     @admin.display(description="Foto")
