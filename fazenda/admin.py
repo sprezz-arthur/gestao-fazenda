@@ -5,6 +5,7 @@ from django.db.models import ImageField
 
 from . import widgets
 from . import models
+from . import forms
 
 
 @admin.register(models.Fazenda)
@@ -40,12 +41,12 @@ class ImageInline(admin.StackedInline):
 
 @admin.register(models.FotoOrdenha)
 class FotoOrdenhaAdmin(admin.ModelAdmin):
+    form = forms.FotoOrdenhaForm
 
     list_display = [
-        "pk",
+        "__str__",
         "original_thumbnail",
         "dewarped_thumbnail",
-        "lines_thumbnail",
         "bbox_thumbnail",
     ]
 
@@ -123,10 +124,6 @@ admin.site.unregister(lt_models.LabelClassColour)
 admin.site.unregister(lt_models.Labels)
 
 
-lt_models.Labels._meta.verbose_name_plural = "Label Sets"
-lt_models.Labels._meta.verbose_name = "Label Set"
-
-
-@admin.register(lt_models.Labels)
+@admin.register(models.Labels)
 class LabelsAdmin(admin.ModelAdmin):
-    ...
+    form = forms.LabelsForm

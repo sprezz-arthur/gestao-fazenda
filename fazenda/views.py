@@ -229,7 +229,7 @@ def tool(request, pk=None):
         "dextr_available": settings.LABELLING_TOOL_DEXTR_AVAILABLE,
         "dextr_polling_interval": settings.LABELLING_TOOL_DEXTR_POLLING_INTERVAL,
         "external_labels_available": settings.LABELLING_TOOL_EXTERNAL_LABEL_API,
-        "fotoordenha_id": pk
+        "fotoordenha_id": pk,
     }
     return render(request, "tool.html", context)
 

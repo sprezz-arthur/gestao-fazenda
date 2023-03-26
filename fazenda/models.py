@@ -6,19 +6,26 @@ from image_labelling_tool import models as lt_models
 
 from .choices import PREFIXO_CHOICES, PERIODO_CHOICES
 
+from utils.geometry import get_dataframe
+
+import json
+
 
 class Labels(lt_models.Labels):
     def save(self, *args, **kwargs):
-        if self.labels_json_str == "[]":
-            return super().save(*args, **kwargs)
-        fotoordenha = self.fotoordenha
-        if not fotoordenha.dewarped:
-            coords = None
-            fotoordenha.dewarped = get_dewarped(fotoordenha.original.path, coords)
+        poly = json.loads(self.labels_json_str)
+        poly = poly[0] if poly else {}
+
+        if poly:
+            self.fotoordenha.set_dewarped(poly)
+            self.fotoordenha.set_bbox()
+
         return super().save(*args, **kwargs)
 
     class Meta:
         proxy = True
+        verbose_name = "Label Set"
+        verbose_name_plural = "Label Sets"
 
 
 class Fazenda(models.Model):
@@ -60,6 +67,10 @@ class FichaOrdenha(models.Model):
         verbose_name = "Ficha de Ordenhas"
         verbose_name_plural = "Fichas de Ordenhas"
 
+    def get_ordenhas(self, *args, **kwargs):
+        if self.fotoordenha.dewarped:
+            Ordenha.objects.create(ficha=self, peso=42)
+
 
 class Ordenha(models.Model):
     periodo = models.CharField(
@@ -67,6 +78,12 @@ class Ordenha(models.Model):
     )
     peso = models.FloatField(null=False, blank=False)
     vaca = models.ForeignKey(Vaca, null=False, blank=False, on_delete=models.CASCADE)
+    nome = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+    numero = models.IntegerField(null=True, blank=True)
     data = models.DateField(null=True, blank=True)
     ficha = models.ForeignKey(
         FichaOrdenha, null=True, blank=True, on_delete=models.SET_NULL
@@ -76,16 +93,17 @@ class Ordenha(models.Model):
 class FotoOrdenha(models.Model):
     ficha = models.OneToOneField(
         FichaOrdenha,
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
+        related_name="fotoordenha",
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE,
     )
     labels = models.OneToOneField(
         Labels,
-        on_delete=models.CASCADE,
         related_name="fotoordenha",
         blank=True,
         null=True,
+        on_delete=models.SET_NULL,
     )
     original = models.ImageField()
     dewarped = models.ImageField(null=True, blank=True)
@@ -95,28 +113,38 @@ class FotoOrdenha(models.Model):
         verbose_name = "Foto de Ordenhas"
         verbose_name_plural = "Fotos de Ordenhas"
 
+    def set_dewarped(self, poly=None):
+        if self.dewarped and poly is None:
+            return
+        from utils.geometry import get_dewarped
+
+        full_path = self.original.path
+        image = get_dewarped(full_path, poly=poly)
+        self.dewarped.save(f"dewarped-{self.original.name}", image)
+        self.bbox.delete()
+
+    def set_bbox(self):
+        if self.bbox or not self.dewarped:
+            return
+        try:
+            from utils.geometry import get_bbox
+
+            full_path = self.dewarped.path
+            image = get_bbox(full_path)
+            self.bbox.save(f"bbox-{self.original.name}", image)
+        except Exception:
+            pass
+
     def save(self, *args, **kwargs):
+        try:
+            self.ficha
+        except Exception:
+            self.ficha = FichaOrdenha.objects.create(data=timezone.now())
+
         if not self.labels:
             self.labels = Labels.objects.create(creation_date=timezone.now())
 
         super().save(*args, **kwargs)
 
-        if not self.dewarped:
-            try:
-                from utils.geometry import get_dewarped
-
-                full_path = self.original.path
-                image = get_dewarped(full_path)
-                self.dewarped.save(f"dewarped-{self.original.name}", image)
-            except Exception:
-                pass
-
-        if not self.bbox and self.dewarped:
-            try:
-                from utils.geometry import get_bbox
-
-                full_path = self.dewarped.path
-                image = get_bbox(full_path)
-                self.bbox.save(f"bbox-{self.original.name}", image)
-            except Exception:
-                pass
+        self.set_dewarped()
+        self.set_bbox()
