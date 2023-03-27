@@ -35,6 +35,15 @@ class OrdenhaAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.order_by("pk")
 
+    def changelist_view(self, request, extra_context=None):
+        try:
+            query_params = request.GET
+            ficha = models.FichaOrdenha.objects.get(pk=query_params.get("ficha_id"))
+            extra_context = {"bbox_url": ficha.fotoordenha.bbox.url}
+        except Exception as e:
+            pass
+        return super().changelist_view(request, extra_context=extra_context)
+
 
 @admin.register(models.OrdenhaDetectada)
 class OrdenhaDetectadaAdmin(admin.ModelAdmin):
@@ -54,6 +63,15 @@ class OrdenhaDetectadaAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.order_by("pk")
+
+    def changelist_view(self, request, extra_context=None):
+        try:
+            query_params = request.GET
+            ficha = models.FichaOrdenha.objects.get(pk=query_params.get("ficha_id"))
+            extra_context = {"bbox_url": ficha.fotoordenha.bbox.url}
+        except Exception as e:
+            pass
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 @admin.register(models.Vaca)
