@@ -11,6 +11,48 @@ from . import models
 from . import forms
 
 
+import csv
+from django.http import HttpResponse
+
+
+def export_to_csv(modeladmin, request, queryset):
+    # Define the CSV filename
+
+    filename = "{}.csv".format(queryset.model._meta.verbose_name_plural.lower())
+
+    # Set the response headers
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="{}"'.format(filename)
+
+    # Define the CSV writer
+    writer = csv.writer(response, delimiter=";")
+
+    # Write the header row
+    header_row = "Nome;Nome;Ord. 1;Ord. 2;Ord. 3;Tot.;Data;Responsável;DEL;Dias sec. prev.;Grupo no controle;Observação;".split(
+        ";"
+    )
+    writer.writerow(header_row)
+
+    # Write the data rows
+    for obj in queryset:
+        row = []
+        row.append(f"{obj.numero} {obj.nome}")
+        row.append(f"{obj.numero} {obj.nome}")
+
+        row.append(f"{obj.peso_manha}")
+        row.append(f"{obj.peso_tarde}")
+
+        for i in range(len(header_row) - 4):
+            row.append("")
+
+        writer.writerow(row)
+
+    return response
+
+
+export_to_csv.short_description = "Export to CSV"
+
+
 @admin.register(models.Fazenda)
 class FazendaAdmin(admin.ModelAdmin):
     pass
@@ -59,6 +101,8 @@ class OrdenhaDetectadaAdmin(admin.ModelAdmin):
             "widget": TextInput(attrs={"size": "4", "style": "width: 100px;"})
         },
     }
+
+    actions = [export_to_csv]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
