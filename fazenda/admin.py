@@ -1,7 +1,10 @@
 from django.utils.safestring import mark_safe
 from django.contrib import admin
 from django.utils.safestring import mark_safe
-from django.db.models import ImageField
+from django.db.models import ImageField, IntegerField, FloatField
+from django.forms import TextInput
+
+from django.forms import TextInput
 
 from . import widgets
 from . import models
@@ -15,12 +18,42 @@ class FazendaAdmin(admin.ModelAdmin):
 
 @admin.register(models.Ordenha)
 class OrdenhaAdmin(admin.ModelAdmin):
-    list_display = ["numero", "nome", "peso_manha", "peso_tarde"]
+    list_display = ["pk", "numero", "nome", "peso_manha", "peso_tarde"]
+    list_editable = ["numero", "nome", "peso_manha", "peso_tarde"]
+
+    change_list_template = "admin/change_list_compact.html"
+    formfield_overrides = {
+        FloatField: {
+            "widget": TextInput(attrs={"size": "4", "style": "width: 100px;"})
+        },
+        IntegerField: {
+            "widget": TextInput(attrs={"size": "4", "style": "width: 100px;"})
+        },
+    }
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.order_by("pk")
 
 
 @admin.register(models.OrdenhaDetectada)
 class OrdenhaDetectadaAdmin(admin.ModelAdmin):
     list_display = ["numero", "nome", "peso_manha", "peso_tarde"]
+    readonly_fields = ["numero", "nome", "peso_manha", "peso_tarde"]
+
+    change_list_template = "admin/change_list_compact.html"
+    formfield_overrides = {
+        FloatField: {
+            "widget": TextInput(attrs={"size": "4", "style": "width: 100px;"})
+        },
+        IntegerField: {
+            "widget": TextInput(attrs={"size": "4", "style": "width: 100px;"})
+        },
+    }
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.order_by("pk")
 
 
 @admin.register(models.Vaca)
@@ -38,7 +71,7 @@ class VacaAdmin(admin.ModelAdmin):
 class ImageInline(admin.StackedInline):
     extra = 0
     model = models.FotoOrdenha
-    
+
     exclude = ["labels", "bounds"]
 
     template = "admin/inline/stacked.html"
@@ -51,19 +84,17 @@ class ImageInline(admin.StackedInline):
 class OrdenhaInline(admin.StackedInline):
     extra = 0
     model = models.Ordenha
-    
-    template = "admin/inline/stacked.html"
 
+    template = "admin/inline/stacked.html"
 
 
 class OrdenhaDetectadaInline(admin.StackedInline):
     extra = 0
     model = models.OrdenhaDetectada
-    
-    readonly_fields = ["numero", "nome", "peso_manha", "peso_tarde"]
-    
-    template = "admin/inline/stacked.html"
 
+    readonly_fields = ["numero", "nome", "peso_manha", "peso_tarde"]
+
+    template = "admin/inline/stacked.html"
 
 
 @admin.register(models.FotoOrdenha)
@@ -127,7 +158,6 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
             )
         except Exception:
             return ""
-
 
 
 @admin.register(models.FichaOrdenha)

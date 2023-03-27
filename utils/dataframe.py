@@ -241,7 +241,7 @@ def has_alnum(s):
     return False
 
 
-def process_row(row):
+def _process_row(row):
     try:
         num = " ".join(r.description for r in row[0] if has_alnum(r.description))
 
@@ -289,6 +289,30 @@ def process_row(row):
             p2 /= 10
     except Exception:
         p2 = None
+    return (num, nome, p1, p2)
+
+
+def process_row(row):
+    try:
+        num = " ".join(r.description for r in row[0] if has_alnum(r.description))
+        num = num.upper()
+
+    except Exception:
+        num = None
+    try:
+        nome = " ".join(r.description for r in row[1] if has_alnum(r.description))
+    except Exception:
+        nome = ""
+
+    try:
+        p1 = "".join(r.description for r in row[2] if has_alnum(r.description))
+    except Exception:
+        p1 = None
+    try:
+        p2 = "".join(r.description for r in row[3] if has_alnum(r.description))
+    except Exception:
+        p2 = None
+
     return (num, nome, p1, p2)
 
 
@@ -602,3 +626,146 @@ def get_table(filepath):
             vacas.append(row)
 
     return table, vacas
+
+
+def get_top_four(l):
+    sorted_list = sorted(l, reverse=True)
+    top_four = sorted_list[:4]
+    return [i for i in range(len(l)) if l[i] in top_four]
+
+
+def get_mean(row, size):
+    mean_dist = []
+    for r in row:
+        v = r.bounding_poly.vertices
+        x = sum(v.x for v in sorted(v, key=lambda v: v.x)[:size]) / size
+        mean_dist.append(x)
+    return mean_dist
+
+
+from collections.abc import Generator
+
+
+def process_table(table) -> Generator[list[str], None, None]:
+    new_table = [[x for l in row if l for x in l if x] for row in table]
+
+    left_dist = []
+    for row in new_table:
+        left_dist += get_mean(row, size=2)
+
+    (n, bins) = np.histogram(left_dist, bins=20)
+
+    limits = [bins[i] for i in get_top_four(n)]
+
+    for row in new_table:
+        mean_dists = get_mean(row, size=4)
+        res = [""] * 4
+        onehots = [
+            [int(mean < limits[1])]
+            + [int(limits[i - 1] < mean < limits[i]) for i in range(2, len(limits))]
+            + [int(mean > limits[-1])]
+            for mean in mean_dists
+        ]
+        indexes = [
+            np.argmax(
+                [int(mean < limits[1])]
+                + [int(limits[i - 1] < mean < limits[i]) for i in range(2, len(limits))]
+                + [int(mean > limits[-1])]
+            )
+            for mean in mean_dists
+        ]
+        for index, r in zip(indexes, row):
+            res[index] += r.description + " "
+        for i in range(len(res)):
+            res[i] = res[i].strip()
+        yield res
+
+
+def get_vertical_lines(img):
+    import cv2
+    import numpy as np
+    from copy import copy
+
+    from utils import geometry
+
+    from functools import reduce
+
+    def add_lines(l1, l2):
+        a = np.array([l1, l2])
+        return tuple(np.average(a, axis=0))
+
+    Segment = tuple[float, float, float, float]
+
+    def vertically_close(s1: Segment, s2: Segment, threshold: int = 5) -> bool:
+        return abs(s1[0] - s2[0]) < threshold and abs(s1[2] - s2[2]) < threshold
+
+    def group_vertically(segments: list[Segment]) -> list[list[Segment]]:
+        groups = []
+        segments_set = set(segments)
+        while segments_set:
+            segment = segments_set.pop()
+            group = [segment]
+            for other_segment in segments_set.copy():
+                if vertically_close(segment, other_segment):
+                    segments_set.remove(other_segment)
+                    group.append(other_segment)
+            groups.append(group)
+        return groups
+
+    import cv2
+    import numpy as np
+    from copy import copy
+
+    height, width, _ = img.shape
+
+    bounds = (0, 0, width, height)
+
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    kernel_size = (1, 45)
+
+    # Perform vertical blurring using the GaussianBlur function
+    blurred_img = cv2.GaussianBlur(gray, kernel_size, sigmaX=0, sigmaY=0)
+
+    kernel = (9, 9)
+
+    edges = cv2.Canny(blurred_img, 200, 200, apertureSize=3)
+    edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations=50)
+    edges = cv2.dilate(edges, kernel, iterations=50)
+
+    length_threshold = round(0.3 * height)
+
+    lines = [
+        l[0]
+        for l in cv2.HoughLinesP(
+            edges,
+            rho=1,
+            theta=np.pi / 720,
+            threshold=length_threshold,
+            minLineLength=100,
+            maxLineGap=10,
+        )
+    ]
+    lines = geometry.filter_by_angle(lines, 90, 30)
+
+    extended_lines = geometry.extend_within_bounds(lines, bounds=bounds)
+
+    groups = group_vertically(extended_lines)
+
+    vertical_lines = [reduce(add_lines, group) for group in groups]
+
+    return vertical_lines
+
+
+def add_lines(img, lines):
+    from copy import copy
+    import cv2
+
+    img_cp = copy(img)
+
+    for line in lines:
+        x1, y1, x2, y2 = [round(x) for x in line]
+        cv2.line(img_cp, (x1, y1), (x2, y2), (0, 255, 0), 3)
+
+    return img_cp

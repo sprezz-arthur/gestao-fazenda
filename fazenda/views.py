@@ -358,7 +358,11 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from . import models
 
+
 def detect_ordenhas(request, object_pk):
     foto = models.FotoOrdenha.objects.get(pk=object_pk)
     foto.get_ordenha_detectada()
-    return HttpResponseRedirect(reverse("admin:fazenda_ordenhadetectada_changelist", args=[object_pk]) + f"?ficha_id={foto.ficha_id}")
+    return HttpResponseRedirect(
+        reverse("admin:fazenda_ordenhadetectada_changelist")
+        + f"?ficha_id={foto.ficha_id}"
+    )

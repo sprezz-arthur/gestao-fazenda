@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.utils.safestring import mark_safe
-from django.contrib.gis.db import models
+from django.db import models
 
 from image_labelling_tool import models as lt_models
 
@@ -136,10 +136,11 @@ class FotoOrdenha(models.Model):
     def set_dewarped(self, poly=None):
         if self.dewarped and poly is None:
             return
-        from utils.geometry import get_dewarped, get_contour
+        from utils.geometry import get_dewarped_poly_with_lines, get_contour
 
         full_path = self.original.path
-        image = get_dewarped(full_path, poly=poly)
+        image = get_dewarped_poly_with_lines(full_path, poly=poly)
+
         self.dewarped.save(f"dewarped-{self.original.name}", image)
         self.bbox.delete()
 
@@ -171,18 +172,15 @@ class FotoOrdenha(models.Model):
 
         table, vacas = get_table(self.dewarped.path)
 
-        for row in table:
+        for num, nome, p1, p2 in process_table(table):
 
-            (num, nome, p1, p2) = process_row(row)
+            auto_num, auto_nome = closest_vaca((num, nome), vacas)
 
-            
-            print(num, nome, p1, p2)
+            auto_num = auto_num or None
+            auto_nome = auto_nome or None
 
-            ordenha = Ordenha.objects.create(ficha=self.ficha)
-
-            OrdenhaDetectada.objects.create(
+            OrdenhaDetectada.objects.get_or_create(
                 ficha=self.ficha,
-                ordenha=ordenha,
                 numero=num,
                 nome=nome,
                 peso_manha=p1,
@@ -199,9 +197,15 @@ class FotoOrdenha(models.Model):
 
             auto_num, auto_nome = closest_vaca((num, nome), vacas)
 
-            ordenha = Ordenha.objects.create(ficha=self.ficha)
+            ordenha, _ = Ordenha.objects.get_or_create(
+                ficha=self.ficha,
+                numero=auto_num,
+                nome=auto_nome,
+                peso_manha=p1,
+                peso_tarde=p2,
+            )
 
-            OrdenhaDetectada.objects.create(
+            OrdenhaDetectada.objects.get_or_create(
                 ficha=self.ficha,
                 ordenha=ordenha,
                 numero=num,

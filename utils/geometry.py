@@ -842,6 +842,45 @@ def get_dewarped_auto(full_path):
     return image_file
 
 
+def get_dewarped_poly_with_lines(full_path, poly):
+    from django.core.files import File
+    import cv2
+    import numpy as np
+
+    from utils.dataframe import get_vertical_lines, add_lines
+
+    image = cv2.imread(full_path)
+
+    y1, x1, _ = np.shape(image)
+    dst = np.array([[0, 0], [x1, 0], [x1, y1], [0, y1]], dtype="float32")
+
+    src = order_vertices_clockwise(poly)
+    src = np.array(src, dtype="float32")
+
+    # Calculate the perspective transform matrix
+    M = cv2.getPerspectiveTransform(src, dst)
+
+    # Apply the perspective transform to the image
+    dewarped = cv2.warpPerspective(image, M, (x1, y1))
+
+    cropped = cv2.cvtColor(dewarped, cv2.COLOR_BGR2RGB)
+
+    vertical_lines = get_vertical_lines(cropped)
+
+    cropped = add_lines(cropped, vertical_lines)
+
+    cropped = Image.fromarray(cropped)
+
+    import io
+
+    image_buffer = io.BytesIO()
+    cropped.save(image_buffer, format="JPEG")
+
+    image_file = File(image_buffer)
+
+    return image_file
+
+
 def get_dewarped_poly(full_path, poly):
     from django.core.files import File
     import cv2
@@ -857,26 +896,6 @@ def get_dewarped_poly(full_path, poly):
 
     # Calculate the perspective transform matrix
     M = cv2.getPerspectiveTransform(src, dst)
-
-    # Put image limits in an array
-    image_limits = np.array(
-        [
-            [0, 0],
-            [image.shape[1], 0],
-            [image.shape[1], image.shape[0]],
-            [0, image.shape[0]],
-        ],
-        dtype="float32",
-    )
-
-    # Transform those limits using the perspective transform matrix
-    transformed_limits = cv2.perspectiveTransform(image_limits.reshape(-1, 1, 2), M)
-
-    # Get bounding box of the transformed limits as points in an array
-    x_min = int(min(transformed_limits[:, 0, 0]))
-    x_max = int(max(transformed_limits[:, 0, 0]))
-    y_min = int(min(transformed_limits[:, 0, 1]))
-    y_max = int(max(transformed_limits[:, 0, 1]))
 
     # Apply the perspective transform to the image
     dewarped = cv2.warpPerspective(image, M, (x1, y1))
@@ -899,6 +918,10 @@ def get_dewarped(full_path, poly=None):
     if poly:
         return get_dewarped_poly(full_path=full_path, poly=poly)
     return get_dewarped_auto(full_path=full_path)
+
+
+def get_dewarped_with_lines():
+    return get_dewarped_poly(full_path=full_pat)
 
 
 def get_fixed_dataframe(full_path):

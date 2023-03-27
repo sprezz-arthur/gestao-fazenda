@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-vf2s+b%2=pn+=-2%12rjxv5@19dl**mk$-!&nsya10ppxvp!$$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["fazenda.sprezz.fr", "164.132.58.209"]
+ALLOWED_HOSTS = ["fazenda.sprezz.fr", "164.132.58.209", "*"]
 CSRF_TRUSTED_ORIGINS = ["https://fazenda.sprezz.fr"]
 
 INTERNAL_IPS = ["127.0.0.1", "https://fazenda.sprezz.fr"]
@@ -43,8 +43,6 @@ INSTALLED_APPS = [
 
 THIRD_PARTY_APPS = [
     "image_labelling_tool",
-    "floppyforms",
-    "leaflet",
     "jazzmin",
     "django_extensions",
     "debug_toolbar",
