@@ -361,10 +361,10 @@ from . import models
 
 def detect_ordenhas(request, object_pk):
     foto = models.FotoOrdenha.objects.get(pk=object_pk)
-    foto.get_ordenha_detectada()
+    foto.get_ordenha()
     return HttpResponseRedirect(
         reverse(
-            "admin:fazenda_ordenhadetectada_changelist",
+            "admin:fazenda_ordenha_changelist",
         )
         + f"?ficha_id={foto.ficha_id}",
     )

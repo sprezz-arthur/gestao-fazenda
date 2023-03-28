@@ -15,7 +15,7 @@ import csv
 from django.http import HttpResponse
 
 
-def export_to_csv(modeladmin, request, queryset):
+def exportar_ordenha_pra_csv(modeladmin, request, queryset):
     # Define the CSV filename
 
     filename = "{}.csv".format(queryset.model._meta.verbose_name_plural.lower())
@@ -36,11 +36,11 @@ def export_to_csv(modeladmin, request, queryset):
     # Write the data rows
     for obj in queryset:
         row = []
-        row.append(f"{obj.numero} {obj.nome}")
-        row.append(f"{obj.numero} {obj.nome}")
+        row.append(f"{obj.numero:03d} {obj.nome}")
+        row.append(f"{obj.numero:03d} {obj.nome}")
 
-        row.append(f"{obj.peso_manha}")
-        row.append(f"{obj.peso_tarde}")
+        row.append(str(obj.peso_manha).replace(".", ","))
+        row.append(str(obj.peso_tarde).replace(".", ","))
 
         for i in range(len(header_row) - 4):
             row.append("")
@@ -50,7 +50,7 @@ def export_to_csv(modeladmin, request, queryset):
     return response
 
 
-export_to_csv.short_description = "Export to CSV"
+exportar_ordenha_pra_csv.short_description = "Exportar Ordenha pra CSV"
 
 
 @admin.register(models.Fazenda)
@@ -72,6 +72,8 @@ class OrdenhaAdmin(admin.ModelAdmin):
             "widget": TextInput(attrs={"size": "4", "style": "width: 100px;"})
         },
     }
+
+    actions = [exportar_ordenha_pra_csv]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -102,7 +104,7 @@ class OrdenhaDetectadaAdmin(admin.ModelAdmin):
         },
     }
 
-    actions = [export_to_csv]
+    actions = [exportar_ordenha_pra_csv]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

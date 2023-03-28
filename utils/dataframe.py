@@ -375,19 +375,88 @@ def closest_string(s, strings):
     return min_s, distance(str_process(s), str_process(min_s))
 
 
-def closest_vaca(vaca, vacas):
+def closest_vaca(vaca, vacas) -> tuple[str, str]:
     num, nome = vaca
-    if nome.strip() == "":
-        return ("", "")
-    nums, nomes = zip(*vacas)
     distances = map(
-        lambda x: (x, distance(str_process(nome), str_process(x[1]))), vacas
+        lambda v: (
+            v,
+            distance(
+                str(num) + " " + str_process(nome), str(v[0]) + " " + str_process(v[1])
+            ),
+        ),
+        vacas,
     )
     distances = list(sorted(distances, key=lambda d: d[1]))
-    min_dist = distances[0][1]
-    best_matches = [d[0] for d in distances if d[1] == min_dist]
-    best_match = min(best_matches, key=lambda x: distance(str(num), str(x[0])))
-    return best_match
+    return distances[0][0]
+
+
+def fix_peso(peso):
+    ascii_to_number = {
+        "0": "0",
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "5": "5",
+        "6": "6",
+        "7": "7",
+        "8": "8",
+        "9": "9",
+        "!": "1",
+        '"': "1",
+        "#": "4",
+        "$": "5",
+        "%": "7",
+        "&": "8",
+        "'": ".",
+        "(": "1",
+        ")": "1",
+        "*": "",
+        "+": "",
+        ",": ".",
+        "-": ".",
+        ".": ".",
+        "/": "1",
+        ":": "",
+        ";": "",
+        "<": "",
+        "=": "",
+        ">": "",
+        "?": "2",
+        "@": "",
+        "A": "4",
+        "B": "3",
+        "C": "0",
+        "D": "0",
+        "E": "3",
+        "F": "",
+        "G": "6",
+        "H": "",
+        "I": "1",
+        "J": "",
+        "K": "",
+        "L": "1",
+        "M": "",
+        "N": "",
+        "O": "0",
+        "P": "9",
+        "Q": "0",
+        "R": "",
+        "S": "5",
+        "T": "7",
+        "U": "",
+        "V": "",
+        "W": "",
+        "X": "",
+        "Y": "",
+        "Z": "2",
+    }
+    auto_peso = "".join(ascii_to_number.get(c, "") for c in peso.upper())
+
+    try:
+        return float(auto_peso)
+    except Exception:
+        return None
 
 
 import pandas as pd
@@ -615,17 +684,7 @@ def get_table(filepath):
             table[row][col] += [annotation]
             table[row][col] = sorted(table[row][col], key=lambda a: center_x(a))
 
-    import csv
-    from unidecode import unidecode
-
-    vacas = []
-
-    with open("rebanho.csv", "r") as file:
-        csvreader = csv.reader(file)
-        for row in list(csvreader)[1:]:
-            vacas.append(row)
-
-    return table, vacas
+    return table
 
 
 def get_top_four(l):

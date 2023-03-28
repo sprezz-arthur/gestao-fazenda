@@ -168,18 +168,22 @@ class FotoOrdenha(models.Model):
 
         super().save(*args, **kwargs)
 
-    def get_ordenha_detectada(self):
+    def get_ordenha(self):
+        table = get_table(self.dewarped.path)
 
-        table, vacas = get_table(self.dewarped.path)
+        vacas = Vaca.objects.values_list("numero", "nome")
 
         for num, nome, p1, p2 in process_table(table):
 
             auto_num, auto_nome = closest_vaca((num, nome), vacas)
 
+            auto_p1 = fix_peso(p1)
+            auto_p2 = fix_peso(p2)
+
             auto_num = auto_num or None
             auto_nome = auto_nome or None
 
-            OrdenhaDetectada.objects.get_or_create(
+            ordenhadetecatada, _ = OrdenhaDetectada.objects.get_or_create(
                 ficha=self.ficha,
                 numero=num,
                 nome=nome,
@@ -187,29 +191,14 @@ class FotoOrdenha(models.Model):
                 peso_tarde=p2,
             )
 
-    def get_ordenha(self):
+            vaca = Vaca.objects.filter(numero=auto_num, nome=auto_nome).first()
 
-        table, vacas = get_table(self.dewarped.path)
-
-        for row in table:
-
-            (num, nome, p1, p2) = process_row(row)
-
-            auto_num, auto_nome = closest_vaca((num, nome), vacas)
-
-            ordenha, _ = Ordenha.objects.get_or_create(
+            Ordenha.objects.get_or_create(
+                ordenhadetectada=ordenhadetecatada,
                 ficha=self.ficha,
+                vaca=vaca,
                 numero=auto_num,
                 nome=auto_nome,
-                peso_manha=p1,
-                peso_tarde=p2,
-            )
-
-            OrdenhaDetectada.objects.get_or_create(
-                ficha=self.ficha,
-                ordenha=ordenha,
-                numero=num,
-                nome=nome,
-                peso_manha=p1,
-                peso_tarde=p2,
+                peso_manha=auto_p1,
+                peso_tarde=auto_p2,
             )
