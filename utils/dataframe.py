@@ -1,14 +1,5 @@
 import numpy as np
 
-import os
-
-
-GOOGLE_APPLICATION_CREDENTIALS = (
-    "/home/arthur/projects/gestao-fazenda/griselda-375011-cloud-vision.json"
-)
-
-os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", GOOGLE_APPLICATION_CREDENTIALS)
-
 Segment = tuple[float, float, float, float]
 
 
