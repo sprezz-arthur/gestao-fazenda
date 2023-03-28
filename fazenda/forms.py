@@ -10,7 +10,7 @@ class ImageUploadForm(forms.Form):
 class FotoOrdenhaForm(forms.ModelForm):
     class Meta:
         model = models.FotoOrdenha
-        exclude = ["ficha", "dewarped_contour", "bbox_contour"]
+        exclude = ["dewarped_contour", "bbox_contour"]
 
 
 class LabelsForm(forms.ModelForm):

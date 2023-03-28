@@ -59,20 +59,10 @@ class Vaca(models.Model):
             return ""
 
 
-class FichaOrdenha(models.Model):
-    csv = models.FileField(null=True, blank=True)
-    data = models.DateField(default=timezone.now, blank=True, null=True)
-
-    class Meta:
-        verbose_name = "Ficha de Ordenhas"
-        verbose_name_plural = "Fichas de Ordenhas"
-
-    def get_ordenhas(self, *args, **kwargs):
-        if self.fotoordenha.dewarped:
-            Ordenha.objects.create(ficha=self, peso=42)
-
-
 class Ordenha(models.Model):
+    foto = models.ForeignKey(
+        "FotoOrdenha", null=True, blank=True, on_delete=models.SET_NULL
+    )
     numero = models.IntegerField(null=True, blank=True)
     nome = models.CharField(
         max_length=255,
@@ -85,14 +75,11 @@ class Ordenha(models.Model):
     vaca = models.ForeignKey(Vaca, null=True, blank=True, on_delete=models.SET_NULL)
 
     data = models.DateField(null=True, blank=True)
-    ficha = models.ForeignKey(
-        FichaOrdenha, null=True, blank=True, on_delete=models.SET_NULL
-    )
 
 
 class OrdenhaDetectada(models.Model):
-    ficha = models.ForeignKey(
-        FichaOrdenha, null=True, blank=True, on_delete=models.SET_NULL
+    foto = models.ForeignKey(
+        "FotoOrdenha", null=True, blank=True, on_delete=models.SET_NULL
     )
 
     ordenha = models.OneToOneField(
@@ -109,13 +96,6 @@ class OrdenhaDetectada(models.Model):
 
 
 class FotoOrdenha(models.Model):
-    ficha = models.OneToOneField(
-        FichaOrdenha,
-        related_name="fotoordenha",
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE,
-    )
     labels = models.OneToOneField(
         Labels,
         related_name="fotoordenha",
@@ -157,11 +137,6 @@ class FotoOrdenha(models.Model):
 
     def save(self, *args, **kwargs):
         try:
-            self.ficha
-        except Exception:
-            self.ficha = FichaOrdenha.objects.create(data=timezone.now())
-
-        try:
             self.labels
         except Exception:
             self.labels = Labels.objects.create(creation_date=timezone.now())
@@ -184,7 +159,7 @@ class FotoOrdenha(models.Model):
             auto_nome = auto_nome or None
 
             ordenhadetecatada, _ = OrdenhaDetectada.objects.get_or_create(
-                ficha=self.ficha,
+                foto=self,
                 numero=num,
                 nome=nome,
                 peso_manha=p1,
@@ -194,8 +169,8 @@ class FotoOrdenha(models.Model):
             vaca = Vaca.objects.filter(numero=auto_num, nome=auto_nome).first()
 
             Ordenha.objects.get_or_create(
+                foto=self,
                 ordenhadetectada=ordenhadetecatada,
-                ficha=self.ficha,
                 vaca=vaca,
                 numero=auto_num,
                 nome=auto_nome,

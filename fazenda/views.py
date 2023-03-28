@@ -366,5 +366,5 @@ def detect_ordenhas(request, object_pk):
         reverse(
             "admin:fazenda_ordenha_changelist",
         )
-        + f"?ficha_id={foto.ficha_id}",
+        + f"?foto_id={object_pk}",
     )

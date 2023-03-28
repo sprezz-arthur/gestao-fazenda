@@ -90,10 +90,11 @@
                                     <div style="float:left;margin-right:10px;">
                                         <img src="{{ bbox_url }}">
                                     </div>
-                                {% endif %}
-
-                                {% result_list_compact cl %}
-
+                                    {% result_list_compact cl %}
+                                {% else %}
+                                    {% result_list cl %}
+                                {% endif %}                                
+                                
                                 {% if action_form and actions_on_bottom and cl.show_admin_actions %}
                                     <div class="row">
                                         <div class="col-12">

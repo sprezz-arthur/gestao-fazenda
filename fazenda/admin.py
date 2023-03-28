@@ -82,8 +82,8 @@ class OrdenhaAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         try:
             query_params = request.GET
-            ficha = models.FichaOrdenha.objects.get(pk=query_params.get("ficha_id"))
-            extra_context = {"bbox_url": ficha.fotoordenha.bbox.url}
+            foto = models.FotoOrdenha.objects.get(pk=query_params.get("foto_id"))
+            extra_context = {"bbox_url": foto.bbox.url}
         except Exception as e:
             pass
         return super().changelist_view(request, extra_context=extra_context)
@@ -113,8 +113,8 @@ class OrdenhaDetectadaAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         try:
             query_params = request.GET
-            ficha = models.FichaOrdenha.objects.get(pk=query_params.get("ficha_id"))
-            extra_context = {"bbox_url": ficha.fotoordenha.bbox.url}
+            foto = models.FotoOrdenha.objects.get(pk=query_params.get("foto_id"))
+            extra_context = {"bbox_url": foto.bbox.url}
         except Exception as e:
             pass
         return super().changelist_view(request, extra_context=extra_context)
@@ -221,26 +221,6 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
                 f'<a href="{obj.bbox_contour.url}"><img src="{obj.bbox_contour.url}" height="300"/></a>'
             )
         except Exception:
-            return ""
-
-
-@admin.register(models.FichaOrdenha)
-class FichaOrdenhaAdmin(admin.ModelAdmin):
-    inlines = [ImageInline]
-    list_display = ["data", "image"]
-
-    @admin.display(description="Foto")
-    def image(self, obj):
-        try:
-            return obj.fotoordenha.original.url
-        except models.FotoOrdenha.DoesNotExist:
-            return ""
-
-    @admin.display(description="Bounding Boxes")
-    def bbox(self, obj):
-        try:
-            return obj.fotoordenha.bbox.url
-        except (models.FotoOrdenha.DoesNotExist, ValueError):
             return ""
 
 
