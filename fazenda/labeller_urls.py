@@ -5,8 +5,6 @@ from . import views
 app_name = "example_labeller"
 
 urlpatterns = [
-    path("", views.home, name="home"),
-    path("upload_images/", views.upload_images, name="upload_images"),
     path("tool/", views.tool, name="tool"),
     path("tool/<int:pk>", views.tool, name="tool"),
     path(

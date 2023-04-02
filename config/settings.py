@@ -13,6 +13,9 @@ import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
+from django.core.handlers.wsgi import WSGIRequest
+from django.urls import get_script_prefix
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -210,31 +213,8 @@ JAZZMIN_SETTINGS = {
     "topmenu_links": [
         # Url that gets reversed (Permissions can be added)
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
-        # external url that opens in a new window (Permissions can be added)
-        {
-            "name": "Support",
-            "url": "https://github.com/farridav/django-jazzmin/issues",
-            "new_window": True,
-        },
-        {
-            "name": "Labeller",
-            "url": "https://fazenda.sprezz.fr/labeller",
-            "new_window": False,
-        },
         # model admin to link to (Permissions checked against model)
         {"model": "auth.User"},
-    ],
-    #############
-    # User Menu #
-    #############
-    # Additional links to include in the user menu on the top right ("app" url type is not allowed)
-    "usermenu_links": [
-        {
-            "name": "Support",
-            "url": "https://github.com/farridav/django-jazzmin/issues",
-            "new_window": True,
-        },
-        {"model": "auth.user"},
     ],
     #############
     # Side Menu #
