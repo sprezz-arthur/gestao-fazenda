@@ -91,7 +91,7 @@ class OrdenhaAdmin(admin.ModelAdmin):
 
 @admin.register(models.OrdenhaDetectada)
 class OrdenhaDetectadaAdmin(admin.ModelAdmin):
-    list_display = ["numero", "nome", "peso_manha", "peso_tarde"]
+    list_display = ["pk", "numero", "nome", "peso_manha", "peso_tarde"]
     readonly_fields = ["numero", "nome", "peso_manha", "peso_tarde"]
 
     change_list_template = "admin/change_list_compact.html"

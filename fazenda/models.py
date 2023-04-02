@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.db import models
@@ -9,6 +11,11 @@ from .choices import PREFIXO_CHOICES, PERIODO_CHOICES
 import json
 
 from utils.dataframe import *
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from django.db.models import Manager
 
 
 class Labels(lt_models.Labels):
@@ -96,6 +103,9 @@ class OrdenhaDetectada(models.Model):
 
 
 class FotoOrdenha(models.Model):
+    ordenha_set: Manager[Ordenha]
+    ordenhadetectada_set: Manager[OrdenhaDetectada]
+
     labels = models.OneToOneField(
         Labels,
         related_name="fotoordenha",
@@ -145,6 +155,9 @@ class FotoOrdenha(models.Model):
 
     def get_ordenha(self):
         table = get_table(self.dewarped.path)
+
+        self.ordenha_set.all().delete()
+        self.ordenhadetectada_set.all().delete()
 
         vacas = Vaca.objects.values_list("numero", "nome")
 

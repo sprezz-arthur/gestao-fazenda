@@ -860,7 +860,10 @@ def get_dewarped_poly_with_lines(full_path, poly):
 
     cropped = cv2.cvtColor(dewarped, cv2.COLOR_BGR2RGB)
 
-    vertical_lines = get_vertical_lines(cropped)
+    try:
+        vertical_lines = get_vertical_lines(cropped)
+    except Exception:
+        vertical_lines = []
 
     cropped = add_lines(cropped, vertical_lines)
 
