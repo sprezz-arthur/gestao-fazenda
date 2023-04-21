@@ -187,3 +187,13 @@ def detect_ordenhas(request, object_pk):
         )
         + f"?foto_id={object_pk}",
     )
+
+
+def got_to_ordenhas(request, object_pk):
+    foto = models.FotoOrdenha.objects.get(pk=object_pk)
+    return HttpResponseRedirect(
+        reverse(
+            "admin:fazenda_ordenha_changelist",
+        )
+        + f"?foto_id={object_pk}",
+    )
