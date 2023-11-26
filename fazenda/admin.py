@@ -28,7 +28,7 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
     writer = csv.writer(response, delimiter=";")
 
     # Write the header row
-    header_row = "Nome;Nome;Ord. 1;Ord. 2;Ord. 3;Tot.;Data;Responsável;DEL;Dias sec. prev.;Grupo no controle;Observação;".split(
+    header_row = "NUMERO;PESO1;PESO2".split(
         ";"
     )
     writer.writerow(header_row)
@@ -36,14 +36,9 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
     # Write the data rows
     for obj in queryset:
         row = []
-        row.append(f"{obj.numero:03d} {obj.nome}")
-        row.append(f"{obj.numero:03d} {obj.nome}")
-
+        row.append(f"{obj.numero}")
         row.append(str(obj.peso_manha).replace(".", ","))
         row.append(str(obj.peso_tarde).replace(".", ","))
-
-        for i in range(len(header_row) - 4):
-            row.append("")
 
         writer.writerow(row)
 
