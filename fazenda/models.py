@@ -41,7 +41,7 @@ class Fazenda(models.Model):
 
 
 class Vaca(models.Model):
-    numero = models.IntegerField(null=False, blank=False)
+    numero = models.CharField(max_length=255, null=True, blank=True)
     nome = models.CharField(max_length=255, null=False, blank=False)
     prefixo = models.CharField(
         max_length=31, choices=PREFIXO_CHOICES, null=True, blank=True
@@ -70,7 +70,7 @@ class Ordenha(models.Model):
     foto = models.ForeignKey(
         "FotoOrdenha", null=True, blank=True, on_delete=models.SET_NULL
     )
-    numero = models.IntegerField(null=True, blank=True)
+    numero = models.CharField(max_length=255, null=True, blank=True)
     nome = models.CharField(
         max_length=255,
         null=True,
@@ -83,6 +83,10 @@ class Ordenha(models.Model):
 
     data = models.DateField(null=True, blank=True)
 
+    @property
+    def prefixo(self):
+        return self.vaca.prefixo
+
 
 class OrdenhaDetectada(models.Model):
     foto = models.ForeignKey(
@@ -90,7 +94,7 @@ class OrdenhaDetectada(models.Model):
     )
 
     ordenha = models.OneToOneField(
-        Ordenha, blank=True, null=True, on_delete=models.SET_NULL
+        Ordenha, blank=True, null=True, on_delete=models.SET_NULL,
     )
     numero = models.CharField(max_length=255, null=True, blank=True)
     nome = models.CharField(
@@ -118,6 +122,7 @@ class FotoOrdenha(models.Model):
 
     bbox = models.ImageField(null=True, blank=True)
     bounds = models.TextField(null=True, blank=True)
+    peso_balde = models.FloatField(default=0)
 
     class Meta:
         verbose_name = "Foto de Ordenhas"

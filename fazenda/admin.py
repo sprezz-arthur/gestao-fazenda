@@ -36,9 +36,12 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
     # Write the data rows
     for obj in queryset:
         row = []
-        row.append(f"{obj.numero}")
-        row.append(str(obj.peso_manha).replace(".", ","))
-        row.append(str(obj.peso_tarde).replace(".", ","))
+        if obj.prefixo:
+            row.append(f"{obj.numero} {obj.prefixo}")
+        else:
+            row.append(f"{obj.numero}")
+        row.append(str(obj.peso_manha - obj.foto.peso_balde).replace(".", ","))
+        row.append(str(obj.peso_tarde - obj.foto.peso_balde).replace(".", ","))
 
         writer.writerow(row)
 
@@ -55,7 +58,7 @@ class FazendaAdmin(admin.ModelAdmin):
 
 @admin.register(models.Ordenha)
 class OrdenhaAdmin(admin.ModelAdmin):
-    list_display = ["pk", "numero", "nome", "peso_manha", "peso_tarde"]
+    list_display = ["pk", "prefixo", "numero", "nome", "peso_manha", "peso_tarde"]
     list_editable = ["numero", "nome", "peso_manha", "peso_tarde"]
 
     change_list_template = "admin/change_list_compact.html"
@@ -99,8 +102,6 @@ class OrdenhaDetectadaAdmin(admin.ModelAdmin):
         },
     }
 
-    actions = [exportar_ordenha_pra_csv]
-
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.order_by("pk")
@@ -124,7 +125,7 @@ class VacaAdmin(admin.ModelAdmin):
 
     @admin.display(description="Número")
     def zero_numero(self, obj):
-        return f"{obj.numero:03d}"
+        return obj.numero
 
 
 class ImageInline(admin.StackedInline):
@@ -139,7 +140,7 @@ class ImageInline(admin.StackedInline):
         ImageField: {"widget": widgets.AdminImageWidget},
     }
 
-
+    
 class OrdenhaInline(admin.StackedInline):
     extra = 0
     model = models.Ordenha
@@ -162,6 +163,7 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
 
     list_display = [
         "__str__",
+        "peso_balde",
         "original_thumbnail",
         "dewarped_thumbnail",
         "bbox_thumbnail",
