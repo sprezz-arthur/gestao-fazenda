@@ -189,7 +189,7 @@ def detect_ordenhas(request, object_pk):
     )
 
 
-def got_to_ordenhas(request, object_pk):
+def see_ordenhas(request, object_pk):
     foto = models.FotoOrdenha.objects.get(pk=object_pk)
     return HttpResponseRedirect(
         reverse(

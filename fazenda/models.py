@@ -159,6 +159,7 @@ class FotoOrdenha(models.Model):
         super().save(*args, **kwargs)
 
     def get_ordenha(self):
+        1/0
         table = get_table(self.dewarped.path)
 
         self.ordenha_set.all().delete()

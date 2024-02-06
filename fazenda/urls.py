@@ -4,13 +4,13 @@ from . import views
 
 urlpatterns = [
     path(
-        "fotoordenha/<int:object_pk>/custom_model_action/",
+        "fotoordenha/<int:object_pk>/detect-ordenhas/",
         views.detect_ordenhas,
         name="detect-ordenhas",
     ),
     path(
-        "fotoordenha/<int:object_pk>/custom_model_action/",
-        views.got_to_ordenhas,
-        name="go-to-ordenhas",
+        "fotoordenha/<int:object_pk>/see-ordenhas/",
+        views.see_ordenhas,
+        name="see-ordenhas",
     ),
 ]

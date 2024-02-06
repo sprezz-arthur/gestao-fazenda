@@ -1,8 +1,8 @@
 {% extends "admin/change_form.html" %}
 
 {% block object-tools-items %}
-  {{ block.super }}
-  <a href="{% url 'example_labeller:tool' original.pk %}" class="btn btn-block btn-secondary btn-sm">Recortar</a>
-  <a href="{% url 'go-to-ordenhas' original.pk %}" class="btn btn-block btn-secondary btn-sm">Ver Ordenhas</a>
-  <a href="{% url 'detect-ordenhas' original.pk %}" class="btn btn-block btn-secondary btn-sm">Detectar Ordenhas</a>
-  {% endblock %}
+{{ block.super }}
+<a href="{% url 'example_labeller:tool' original.pk %}" class="btn btn-block btn-secondary btn-sm">Recortar</a>
+<a href="{% url 'see-ordenhas' original.pk %}" class="btn btn-block btn-secondary btn-sm">Ver Ordenhas</a>
+<a href="{% url 'detect-ordenhas' original.pk %}" class="btn btn-block btn-secondary btn-sm">Detectar Ordenhas</a>
+{% endblock %}
