@@ -710,12 +710,6 @@ def process_table(table) -> Generator[list[str], None, None]:
     for row in new_table:
         mean_dists = get_mean(row, size=4)
         res = [""] * 4
-        onehots = [
-            [int(mean < limits[1])]
-            + [int(limits[i - 1] < mean < limits[i]) for i in range(2, len(limits))]
-            + [int(mean > limits[-1])]
-            for mean in mean_dists
-        ]
         indexes = [
             np.argmax(
                 [int(mean < limits[1])]
@@ -725,7 +719,7 @@ def process_table(table) -> Generator[list[str], None, None]:
             for mean in mean_dists
         ]
         for index, r in zip(indexes, row):
-            res[index] += r.description + " "
+            res[index % len(res)] += r.description + " "
         for i in range(len(res)):
             res[i] = res[i].strip()
         yield res

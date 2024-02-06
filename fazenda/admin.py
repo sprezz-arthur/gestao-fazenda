@@ -40,8 +40,22 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
             row.append(f"{obj.numero} {obj.prefixo}")
         else:
             row.append(f"{obj.numero}")
-        row.append(str(obj.peso_manha - obj.foto.peso_balde).replace(".", ","))
-        row.append(str(obj.peso_tarde - obj.foto.peso_balde).replace(".", ","))
+
+        peso_balde = 0
+        if obj.foto.peso_balde:
+            peso_balde = obj.foto.peso_balde
+
+        if obj.peso_manha:
+            peso_manha = obj.peso_manha - peso_balde
+            row.append(str(peso_manha).replace(".", ","))
+        else:
+            row.append("")
+
+        if obj.peso_tarde:
+            peso_tarde = obj.peso_tarde - peso_balde
+            row.append(str(peso_tarde).replace(".", ","))
+        else:
+            row.append("")
 
         writer.writerow(row)
 
