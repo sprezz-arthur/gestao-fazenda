@@ -28,7 +28,7 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
     writer = csv.writer(response, delimiter=";")
 
     # Write the header row
-    header_row = "NUMERO;PESO1;PESO2".split(
+    header_row = "NUMERO;PESO1;PESO2;PESO3;PESOTOTAL;ESCORE;OBSERVACAO".split(
         ";"
     )
     writer.writerow(header_row)
@@ -55,6 +55,9 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
             peso_tarde = obj.peso_tarde - peso_balde
             row.append(str(peso_tarde).replace(".", ","))
         else:
+            row.append("")
+
+        while len(row) < len(header_row):
             row.append("")
 
         writer.writerow(row)
