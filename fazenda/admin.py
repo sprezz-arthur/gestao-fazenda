@@ -76,7 +76,7 @@ class FazendaAdmin(admin.ModelAdmin):
 @admin.register(models.Ordenha)
 class OrdenhaAdmin(admin.ModelAdmin):
     list_display = ["pk", "prefixo", "numero", "nome", "peso_manha", "peso_tarde"]
-    list_editable = ["numero", "nome", "peso_manha", "peso_tarde"]
+    list_editable = ["prefixo", "numero", "nome", "peso_manha", "peso_tarde"]
 
     change_list_template = "admin/change_list_compact.html"
     formfield_overrides = {

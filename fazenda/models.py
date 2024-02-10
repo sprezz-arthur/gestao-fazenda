@@ -44,7 +44,7 @@ class Vaca(models.Model):
     numero = models.CharField(max_length=255, null=True, blank=True)
     nome = models.CharField(max_length=255, null=False, blank=False)
     prefixo = models.CharField(
-        max_length=31, choices=PREFIXO_CHOICES, null=True, blank=True
+        max_length=31, null=True, blank=True
     )
     nome_ideagri = models.CharField(max_length=255, null=True, blank=True)
     foto = models.ImageField(null=True, blank=True)
@@ -83,10 +83,9 @@ class Ordenha(models.Model):
 
     data = models.DateField(null=True, blank=True)
 
-    @property
-    def prefixo(self):
-        return self.vaca.prefixo
-
+    prefixo = models.CharField(
+        max_length=31, null=True, blank=True
+    )
 
 class OrdenhaDetectada(models.Model):
     foto = models.ForeignKey(
@@ -190,8 +189,9 @@ class FotoOrdenha(models.Model):
                 foto=self,
                 ordenhadetectada=ordenhadetecatada,
                 vaca=vaca,
-                numero=auto_num,
-                nome=auto_nome,
+                prefixo=vaca.prefixo,
+                numero=vaca.numero,
+                nome=vaca.nome,
                 peso_manha=auto_p1,
                 peso_tarde=auto_p2,
             )

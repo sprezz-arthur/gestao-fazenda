@@ -178,7 +178,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from . import models
 
 
-def detect_ordenhas(request, object_pk):
+def detectar_ordenhas(request, object_pk):
     foto = models.FotoOrdenha.objects.get(pk=object_pk)
     foto.get_ordenha()
     return HttpResponseRedirect(

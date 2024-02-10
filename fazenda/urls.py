@@ -5,7 +5,7 @@ from . import views
 urlpatterns = [
     path(
         "fotoordenha/<int:object_pk>/detect-ordenhas/",
-        views.detect_ordenhas,
+        views.detectar_ordenhas,
         name="detect-ordenhas",
     ),
     path(
