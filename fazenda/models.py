@@ -195,3 +195,32 @@ class FotoOrdenha(models.Model):
                 peso_manha=auto_p1,
                 peso_tarde=auto_p2,
             )
+
+
+class Rebanho(models.Model):
+    file = models.FileField()
+
+    def save(self, *args, **kwargs):
+        from utils.importar_vacas import importar_vacas
+        import pandas as pd
+        Vaca.objects.all().delete()
+        
+        def convert_xlsx_to_csv_in_memory(xlsx_bytes):
+            # Read the Excel file from bytes into a pandas DataFrame
+            df = pd.read_excel(io.BytesIO(xlsx_bytes))
+            # Write the DataFrame to a CSV file in memory
+            csv_buffer = io.StringIO()
+            df.to_csv(csv_buffer, index=False)
+            # Get the CSV content from the buffer
+            csv_content = csv_buffer.getvalue()
+            return csv_content
+
+        if self.file.path.endswith(".xlsx"):
+            csv_file = convert_xlsx_to_csv_in_memory(self.file.read())
+            importar_vacas(csv_file)
+        else:  # csv
+            importar_vacas(self.file.read().decode('utf-8'))
+
+
+        
+        super().save(*args, **kwargs)

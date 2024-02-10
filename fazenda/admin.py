@@ -157,6 +157,9 @@ class ImageInline(admin.StackedInline):
         ImageField: {"widget": widgets.AdminImageWidget},
     }
 
+@admin.register(models.Rebanho)
+class RebanhoAdmin(admin.ModelAdmin):
+    pass
     
 class OrdenhaInline(admin.StackedInline):
     extra = 0
