@@ -219,7 +219,7 @@ class Rebanho(models.Model):
             csv_file = convert_xlsx_to_csv_in_memory(self.file.read())
             importar_vacas(csv_file)
         else:  # csv
-            importar_vacas(self.file.read().decode('utf-8'))
+            importar_vacas(self.file.read())
 
 
         
