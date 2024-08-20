@@ -1,7 +1,12 @@
-import numpy as np
-
+import io
 import os
+from enum import Enum
 
+import numpy as np
+from google.cloud import vision
+from Levenshtein import distance
+from PIL import Image, ImageDraw
+from unidecode import unidecode
 
 Segment = tuple[float, float, float, float]
 
@@ -50,7 +55,7 @@ def group_intersecting_segments(segments: list[Segment]) -> list[list[Segment]]:
 def extend_within_bounds(
     segments: Segment | list[Segment], bounds: tuple[float, float, float, float]
 ):
-    if type(segments) != list:
+    if type(segments) is list:
         segments = [segments]
 
     xmin, ymin, xmax, ymax = bounds
@@ -67,7 +72,6 @@ def extend_within_bounds(
             y1 = y1 - slope * 1_000_000
 
         if slope != float("inf"):
-
             x2 = x2 + slope * 1_000_000
             y2 = y2 + slope * 1_000_000
 
@@ -129,14 +133,6 @@ def group_vertically(segments: list[Segment]) -> list[list[Segment]]:
                 group.append(other_segment)
         groups.append(group)
     return groups
-
-
-import argparse
-from enum import Enum
-import io
-
-from google.cloud import vision
-from PIL import Image, ImageDraw
 
 
 class FeatureType(Enum):
@@ -220,12 +216,6 @@ def get_bbox(filein):
     image_file = File(image_buffer)
 
     return image_file, bounds
-
-
-import io
-import os
-
-from unidecode import unidecode
 
 
 def has_alnum(s):
@@ -316,8 +306,6 @@ def max_y(a):
     return max([v.y for v in a.bounding_poly.vertices])
 
 
-from Levenshtein import distance
-
 prefixes = [
     "TE ",
     "AM ",
@@ -361,7 +349,6 @@ def closest_vaca(vaca, vacas):
 
 
 # Imports the Google Cloud client library
-from google.cloud import vision
 
 
 def get_dataframe(filepath):
@@ -378,6 +365,7 @@ def get_dataframe(filepath):
     image = vision.Image(content=content)
 
     from collections import defaultdict
+
     import numpy as np
 
     response = client.document_text_detection(image=image)
@@ -447,8 +435,8 @@ def get_dataframe(filepath):
         new_rows.append(row)
         # print(f'key[{key}]: {row}')
 
-    from sklearn.cluster import KMeans
     import numpy as np
+    from sklearn.cluster import KMeans
 
     new_annotations = []
 
@@ -494,6 +482,7 @@ def get_dataframe(filepath):
     del regions[0]
 
     from collections import defaultdict
+
     import numpy as np
 
     new_annotations = list(reversed(sort_vertically(new_annotations)))
@@ -564,7 +553,6 @@ def get_dataframe(filepath):
             table[row][col] = sorted(table[row][col], key=lambda a: center_x(a))
 
     import csv
-    from unidecode import unidecode
 
     ns = []
     nomes = []
@@ -582,7 +570,6 @@ def get_dataframe(filepath):
 
     df = pd.DataFrame(columns=["Nº", "NOME", "AUTO Nº", "AUTO NOME", "MANHÃ", "TARDE"])
     for i, row in enumerate(table):
-
         (num, nome, p1, p2) = process_row(row)
 
         auto_num, auto_nome = closest_vaca((num, nome), vacas)
@@ -592,7 +579,6 @@ def get_dataframe(filepath):
     import pandas as pd
 
     def disimilar(s1, s2):
-
         s1 = s1.map(lambda s: str_process(s))
 
         s2 = s2.map(lambda s: str_process(s))
@@ -606,7 +592,6 @@ def get_dataframe(filepath):
         )
 
     def select_col(x):
-        red = "background-color: red"
         yellow = "background-color: yellow"
         c2 = ""
         # compare columns
@@ -659,17 +644,13 @@ def order_vertices_clockwise(polygon_data):
 
 
 def get_dewarped_auto(full_path):
-    from django.core.files import File
     import cv2
     import numpy as np
-    import matplotlib.pyplot as plt
+    from django.core.files import File
 
     image = cv2.imread(full_path)
 
-    from django.core.files import File
     import cv2
-    import numpy as np
-    import matplotlib.pyplot as plt
 
     # Load the image
     image = cv2.imread(full_path)
@@ -683,7 +664,7 @@ def get_dewarped_auto(full_path):
     # Use Hough Transform to detect lines
     for threshold in range(400, 100, -5):
         lines = cv2.HoughLinesP(edges, 1, np.pi / 360, threshold, maxLineGap=100)
-        if not lines is None and len(lines) > 20:
+        if lines is not None and len(lines) > 20:
             break
 
     # Filter out the small lines
@@ -709,7 +690,7 @@ def get_dewarped_auto(full_path):
         else:
             vertical_lines.append(endpoint)
 
-    horizontal_lines_orig = np.copy(horizontal_lines)
+    np.copy(horizontal_lines)
     # Consider only extreme lines
     highest_horizontal_line = max(horizontal_lines, key=lambda x: x[0][1])
     lowest_horizontal_line = min(horizontal_lines, key=lambda x: x[0][1])
@@ -838,11 +819,11 @@ def get_dewarped_auto(full_path):
 
 
 def get_dewarped_poly_with_lines(full_path, poly):
-    from django.core.files import File
     import cv2
     import numpy as np
+    from django.core.files import File
 
-    from utils.dataframe import get_vertical_lines, add_lines
+    from utils.dataframe import add_lines, get_vertical_lines
 
     image = cv2.imread(full_path)
 
@@ -880,9 +861,9 @@ def get_dewarped_poly_with_lines(full_path, poly):
 
 
 def get_dewarped_poly(full_path, poly):
-    from django.core.files import File
     import cv2
     import numpy as np
+    from django.core.files import File
 
     image = cv2.imread(full_path)
 
@@ -918,18 +899,12 @@ def get_dewarped(full_path, poly=None):
     return get_dewarped_auto(full_path=full_path)
 
 
-def get_dewarped_with_lines():
-    return get_dewarped_poly(full_path=full_pat)
-
-
 def get_fixed_dataframe(full_path):
     return fix_headers(get_dataframe(full_path))
 
 
 def get_contour(filein):
     import cv2
-    from django.core.files import File
-
     from django.core.files import File
 
     img = np.array(Image.open(filein))

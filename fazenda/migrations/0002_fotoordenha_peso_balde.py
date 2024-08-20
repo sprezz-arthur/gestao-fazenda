@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fazenda', '0001_initial'),
+        ("fazenda", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='fotoordenha',
-            name='peso_balde',
+            model_name="fotoordenha",
+            name="peso_balde",
             field=models.FloatField(default=0),
         ),
     ]

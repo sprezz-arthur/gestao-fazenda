@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fazenda', '0003_alter_ordenha_numero_alter_vaca_numero'),
+        ("fazenda", "0003_alter_ordenha_numero_alter_vaca_numero"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='vaca',
-            name='prefixo',
+            model_name="vaca",
+            name="prefixo",
             field=models.CharField(blank=True, max_length=31, null=True),
         ),
     ]

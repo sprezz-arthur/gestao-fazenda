@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fazenda', '0002_fotoordenha_peso_balde'),
+        ("fazenda", "0002_fotoordenha_peso_balde"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='ordenha',
-            name='numero',
+            model_name="ordenha",
+            name="numero",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AlterField(
-            model_name='vaca',
-            name='numero',
+            model_name="vaca",
+            name="numero",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
     ]

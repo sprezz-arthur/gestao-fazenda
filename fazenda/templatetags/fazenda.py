@@ -1,6 +1,22 @@
-from django import template
-from django.contrib.admin.templatetags.admin_list import *
+import datetime
 
+from django import template
+from django.contrib.admin.templatetags.admin_list import (
+    InclusionAdminNode,
+    result_headers,
+    result_hidden_fields,
+)
+from django.contrib.admin.templatetags.admin_urls import add_preserved_filters
+from django.contrib.admin.utils import (
+    display_for_field,
+    display_for_value,
+    lookup_field,
+)
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
+from django.urls import NoReverseMatch
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 

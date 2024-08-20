@@ -1,27 +1,20 @@
-import os, datetime, json, tempfile, zipfile
-import requests
+import datetime
+import json
 
-from django.http.response import HttpResponse
 import celery.result
-
-from PIL import Image
-
-from dateutil.tz import tzlocal
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.db import transaction
-from django.db.models import Q
-from django.core.files import File
-
-from django.conf import settings
 import django.utils.timezone
-
-from image_labelling_tool import labelling_tool
+import requests
+from django.conf import settings
+from django.db.models import Q
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
+from image_labelling_tool import labelling_tool, labelling_tool_views
 from image_labelling_tool import models as lt_models
-from image_labelling_tool import labelling_tool_views, schema_editor_views
 
-from . import models, tasks, forms
+from . import models, tasks
 
 
 @ensure_csrf_cookie
@@ -62,9 +55,6 @@ def tool(request, pk=None):
         "fotoordenha_id": pk,
     }
     return render(request, "tool.html", context)
-
-
-from django.utils import timezone
 
 
 class LabellingToolAPI(labelling_tool_views.LabellingToolViewWithLocking):
@@ -131,7 +121,7 @@ class LabellingToolAPI(labelling_tool_views.LabellingToolViewWithLocking):
             if res.ready():
                 try:
                     regions = res.get()
-                except:
+                except Exception:
                     # An error occurred during the DEXTR task; nothing we can do
                     pass
                 else:
@@ -171,13 +161,6 @@ def get_api_labels(request, image_id):
     return HttpResponse("success", status=200)
 
 
-from django.urls import reverse
-from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect
-
-from . import models
-
-
 def detectar_ordenhas(request, object_pk):
     foto = models.FotoOrdenha.objects.get(pk=object_pk)
     foto.get_ordenha()
@@ -190,7 +173,7 @@ def detectar_ordenhas(request, object_pk):
 
 
 def see_ordenhas(request, object_pk):
-    foto = models.FotoOrdenha.objects.get(pk=object_pk)
+    models.FotoOrdenha.objects.get(pk=object_pk)
     return HttpResponseRedirect(
         reverse(
             "admin:fazenda_ordenha_changelist",

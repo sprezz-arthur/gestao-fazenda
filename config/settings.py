@@ -9,13 +9,12 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
+
 import os
 from pathlib import Path
+
 from django.utils.translation import gettext_lazy as _
-
-from django.core.handlers.wsgi import WSGIRequest
-from django.urls import get_script_prefix
-
+from easy_thumbnails.conf import Settings as thumbnail_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -59,7 +58,6 @@ THIRD_PARTY_APPS = [
     "debug_toolbar",
 ]
 
-from easy_thumbnails.conf import Settings as thumbnail_settings
 
 THUMBNAIL_PROCESSORS = (
     "image_cropping.thumbnail_processors.crop_corners",
@@ -311,6 +309,5 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
-from image_labelling_tool import labelling_tool
 
 ANNO_CONTROLS = []

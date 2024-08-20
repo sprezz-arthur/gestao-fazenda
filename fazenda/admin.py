@@ -1,18 +1,13 @@
-from django.utils.safestring import mark_safe
-from django.contrib import admin
-from django.utils.safestring import mark_safe
-from django.db.models import ImageField, IntegerField, FloatField
-from django.forms import TextInput
-
-from django.forms import TextInput
-
-from . import widgets
-from . import models
-from . import forms
-
-
 import csv
+
+from django.contrib import admin
+from django.db.models import FloatField, ImageField, IntegerField
+from django.forms import TextInput
 from django.http import HttpResponse
+from django.utils.safestring import mark_safe
+from image_labelling_tool import models as lt_models
+
+from . import forms, models, widgets
 
 
 def exportar_ordenha_pra_csv(modeladmin, request, queryset):
@@ -28,9 +23,7 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
     writer = csv.writer(response, delimiter=";")
 
     # Write the header row
-    header_row = "NUMERO;PESO1;PESO2;PESO3;PESOTOTAL;ESCORE;OBSERVACAO".split(
-        ";"
-    )
+    header_row = "NUMERO;PESO1;PESO2;PESO3;PESOTOTAL;ESCORE;OBSERVACAO".split(";")
     writer.writerow(header_row)
 
     # Write the data rows
@@ -99,7 +92,7 @@ class OrdenhaAdmin(admin.ModelAdmin):
             query_params = request.GET
             foto = models.FotoOrdenha.objects.get(pk=query_params.get("foto_id"))
             extra_context = {"bbox_url": foto.bbox.url}
-        except Exception as e:
+        except Exception:
             pass
         return super().changelist_view(request, extra_context=extra_context)
 
@@ -119,6 +112,9 @@ class OrdenhaDetectadaAdmin(admin.ModelAdmin):
         },
     }
 
+    def get_prefixo(self, obj):
+        return "oi"
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.order_by("pk")
@@ -128,7 +124,7 @@ class OrdenhaDetectadaAdmin(admin.ModelAdmin):
             query_params = request.GET
             foto = models.FotoOrdenha.objects.get(pk=query_params.get("foto_id"))
             extra_context = {"bbox_url": foto.bbox.url}
-        except Exception as e:
+        except Exception:
             pass
         return super().changelist_view(request, extra_context=extra_context)
 
@@ -157,10 +153,12 @@ class ImageInline(admin.StackedInline):
         ImageField: {"widget": widgets.AdminImageWidget},
     }
 
+
 @admin.register(models.Rebanho)
 class RebanhoAdmin(admin.ModelAdmin):
     pass
-    
+
+
 class OrdenhaInline(admin.StackedInline):
     extra = 0
     model = models.Ordenha
@@ -193,7 +191,7 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
         ImageField: {"widget": widgets.AdminImageWidget},
     }
 
-    change_form_template = "admin/change_form.html"
+    change_form_template = "admin/foto_ordenha_change_form.html"
 
     @admin.display(description="Original")
     def original_thumbnail(self, obj):
@@ -240,8 +238,6 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
         except Exception:
             return ""
 
-
-from image_labelling_tool import models as lt_models
 
 admin.site.unregister(lt_models.LabellingTask)
 admin.site.unregister(lt_models.LabellingSchema)

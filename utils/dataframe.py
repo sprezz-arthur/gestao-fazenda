@@ -1,4 +1,13 @@
+import io
+from collections.abc import Generator
+from enum import Enum
+
 import numpy as np
+import pandas as pd
+from google.cloud import vision
+from Levenshtein import distance
+from PIL import Image, ImageDraw
+from unidecode import unidecode
 
 Segment = tuple[float, float, float, float]
 
@@ -47,7 +56,7 @@ def group_intersecting_segments(segments: list[Segment]) -> list[list[Segment]]:
 def extend_within_bounds(
     segments: Segment | list[Segment], bounds: tuple[float, float, float, float]
 ):
-    if type(segments) != list:
+    if type(segments) is list:
         segments = [segments]
 
     xmin, ymin, xmax, ymax = bounds
@@ -64,7 +73,6 @@ def extend_within_bounds(
             y1 = y1 - slope * 1_000_000
 
         if slope != float("inf"):
-
             x2 = x2 + slope * 1_000_000
             y2 = y2 + slope * 1_000_000
 
@@ -126,14 +134,6 @@ def group_vertically(segments: list[Segment]) -> list[list[Segment]]:
                 group.append(other_segment)
         groups.append(group)
     return groups
-
-
-import argparse
-from enum import Enum
-import io
-
-from google.cloud import vision
-from PIL import Image, ImageDraw
 
 
 class FeatureType(Enum):
@@ -217,12 +217,6 @@ def get_bbox(filein):
     image_file = File(image_buffer)
 
     return image_file, bounds
-
-
-import io
-import os
-
-from unidecode import unidecode
 
 
 def has_alnum(s):
@@ -337,8 +331,6 @@ def max_y(a):
     return max([v.y for v in a.bounding_poly.vertices])
 
 
-from Levenshtein import distance
-
 prefixes = [
     "TE ",
     "AM ",
@@ -450,11 +442,7 @@ def fix_peso(peso):
         return None
 
 
-import pandas as pd
-
-
 def disimilar(s1, s2):
-
     s1 = s1.map(lambda s: str_process(s))
 
     s2 = s2.map(lambda s: str_process(s))
@@ -462,15 +450,7 @@ def disimilar(s1, s2):
     return s1 != s2
 
 
-def match(x):
-    name = x.name.replace("AUTO ", "")
-    return (disimilar(x, df[name])).map(
-        {True: "background-color: yellow; color: black", False: ""}
-    )
-
-
 def select_col(x):
-    red = "background-color: red"
     yellow = "background-color: yellow"
     c2 = ""
     # compare columns
@@ -504,6 +484,7 @@ def get_table(filepath):
     image = vision.Image(content=content)
 
     from collections import defaultdict
+
     import numpy as np
 
     response = client.document_text_detection(image=image)
@@ -557,10 +538,8 @@ def get_table(filepath):
         row = " ".join([a.description for a in group])
         rows.append(row)
 
-    from copy import copy
-
-    from sklearn.cluster import KMeans
     import numpy as np
+    from sklearn.cluster import KMeans
 
     new_annotations = []
 
@@ -606,6 +585,7 @@ def get_table(filepath):
     del regions[0]
 
     from collections import defaultdict
+
     import numpy as np
 
     new_annotations = list(reversed(sort_vertically(new_annotations)))
@@ -678,10 +658,10 @@ def get_table(filepath):
     return table
 
 
-def get_top_four(l):
-    sorted_list = sorted(l, reverse=True)
+def get_top_four(lista):
+    sorted_list = sorted(lista, reverse=True)
     top_four = sorted_list[:4]
-    return [i for i in range(len(l)) if l[i] in top_four]
+    return [i for i in range(len(lista)) if lista[i] in top_four]
 
 
 def get_mean(row, size):
@@ -693,11 +673,8 @@ def get_mean(row, size):
     return mean_dist
 
 
-from collections.abc import Generator
-
-
 def process_table(table) -> Generator[list[str], None, None]:
-    new_table = [[x for l in row if l for x in l if x] for row in table]
+    new_table = [[x for c in row if c for x in c if x] for row in table]
 
     left_dist = []
     for row in new_table:
@@ -726,13 +703,12 @@ def process_table(table) -> Generator[list[str], None, None]:
 
 
 def get_vertical_lines(img):
+    from functools import reduce
+
     import cv2
     import numpy as np
-    from copy import copy
 
     from utils import geometry
-
-    from functools import reduce
 
     def add_lines(l1, l2):
         a = np.array([l1, l2])
@@ -756,10 +732,6 @@ def get_vertical_lines(img):
             groups.append(group)
         return groups
 
-    import cv2
-    import numpy as np
-    from copy import copy
-
     height, width, _ = img.shape
 
     bounds = (0, 0, width, height)
@@ -781,8 +753,8 @@ def get_vertical_lines(img):
     length_threshold = round(0.3 * height)
 
     lines = [
-        l[0]
-        for l in cv2.HoughLinesP(
+        line[0]
+        for line in cv2.HoughLinesP(
             edges,
             rho=1,
             theta=np.pi / 720,
@@ -804,6 +776,7 @@ def get_vertical_lines(img):
 
 def add_lines(img, lines):
     from copy import copy
+
     import cv2
 
     img_cp = copy(img)

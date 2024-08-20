@@ -1,18 +1,15 @@
 from __future__ import annotations
 
+import io
+import json
+from typing import TYPE_CHECKING
+
+from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
-from django.db import models
-
 from image_labelling_tool import models as lt_models
 
-from .choices import PREFIXO_CHOICES, PERIODO_CHOICES
-
-import json
-
-from utils.dataframe import *
-
-from typing import TYPE_CHECKING
+from utils.dataframe import closest_vaca, fix_peso, get_table, process_table
 
 if TYPE_CHECKING:
     from django.db.models import Manager
@@ -43,9 +40,7 @@ class Fazenda(models.Model):
 class Vaca(models.Model):
     numero = models.CharField(max_length=255, null=True, blank=True)
     nome = models.CharField(max_length=255, null=False, blank=False)
-    prefixo = models.CharField(
-        max_length=31, null=True, blank=True
-    )
+    prefixo = models.CharField(max_length=31, null=True, blank=True)
     nome_ideagri = models.CharField(max_length=255, null=True, blank=True)
     foto = models.ImageField(null=True, blank=True)
     fazenda = models.ForeignKey(
@@ -83,9 +78,8 @@ class Ordenha(models.Model):
 
     data = models.DateField(null=True, blank=True)
 
-    prefixo = models.CharField(
-        max_length=31, null=True, blank=True
-    )
+    prefixo = models.CharField(max_length=31, null=True, blank=True)
+
 
 class OrdenhaDetectada(models.Model):
     foto = models.ForeignKey(
@@ -93,7 +87,10 @@ class OrdenhaDetectada(models.Model):
     )
 
     ordenha = models.OneToOneField(
-        Ordenha, blank=True, null=True, on_delete=models.SET_NULL,
+        Ordenha,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
     )
     numero = models.CharField(max_length=255, null=True, blank=True)
     nome = models.CharField(
@@ -130,7 +127,7 @@ class FotoOrdenha(models.Model):
     def set_dewarped(self, poly=None):
         if self.dewarped and poly is None:
             return
-        from utils.geometry import get_dewarped_poly_with_lines, get_contour
+        from utils.geometry import get_dewarped_poly_with_lines
 
         full_path = self.original.path
         image = get_dewarped_poly_with_lines(full_path, poly=poly)
@@ -139,7 +136,7 @@ class FotoOrdenha(models.Model):
         self.bbox.delete()
 
     def set_bbox(self):
-        from utils.geometry import get_bbox, bounds_to_dict
+        from utils.geometry import get_bbox
 
         if self.bbox or not self.dewarped:
             return
@@ -163,11 +160,10 @@ class FotoOrdenha(models.Model):
         self.ordenha_set.all().delete()
         self.ordenhadetectada_set.all().delete()
 
-        vacas = Vaca.objects.values_list("numero", "nome")
+        vacas = Vaca.objects.values_list("prefixo", "numero", "nome")
 
         for num, nome, p1, p2 in process_table(table):
-
-            auto_num, auto_nome = closest_vaca((num, nome), vacas)
+            auto_num, auto_nome = closest_vaca((pre, num, nome), vacas)
 
             auto_p1 = fix_peso(p1)
             auto_p2 = fix_peso(p2)
@@ -200,18 +196,20 @@ class FotoOrdenha(models.Model):
 class Rebanho(models.Model):
     file = models.FileField()
 
+    def __str__(self) -> str:
+        return self.file.name
+
     def save(self, *args, **kwargs):
-        from utils.importar_vacas import importar_vacas
         import pandas as pd
+
+        from utils.importar_vacas import importar_vacas
+
         Vaca.objects.all().delete()
-        
+
         def convert_xlsx_to_csv_in_memory(xlsx_bytes):
-            # Read the Excel file from bytes into a pandas DataFrame
             df = pd.read_excel(io.BytesIO(xlsx_bytes))
-            # Write the DataFrame to a CSV file in memory
             csv_buffer = io.StringIO()
             df.to_csv(csv_buffer, index=False)
-            # Get the CSV content from the buffer
             csv_content = csv_buffer.getvalue()
             return csv_content
 
@@ -221,6 +219,4 @@ class Rebanho(models.Model):
         else:  # csv
             importar_vacas(self.file.read())
 
-
-        
         super().save(*args, **kwargs)
