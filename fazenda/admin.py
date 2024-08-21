@@ -178,6 +178,7 @@ class OrdenhaDetectadaInline(admin.StackedInline):
 @admin.register(models.FotoOrdenha)
 class FotoOrdenhaAdmin(admin.ModelAdmin):
     form = forms.FotoOrdenhaForm
+    fields = ["peso_balde", "original", "dewarped", "bbox"]
 
     list_display = [
         "__str__",
