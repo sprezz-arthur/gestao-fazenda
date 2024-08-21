@@ -53,6 +53,9 @@ class Vaca(models.Model):
             "nome",
         )
 
+    def __str__(self) -> str:
+        return " ".join([self.numero, self.prefixo, self.nome])
+
     @property
     def image_tag(self):
         try:
@@ -71,8 +74,12 @@ class Ordenha(models.Model):
         null=True,
         blank=True,
     )
-    peso_manha = models.FloatField(null=True, blank=True)
-    peso_tarde = models.FloatField(null=True, blank=True)
+    peso_manha = models.DecimalField(
+        null=True, blank=True, decimal_places=3, max_digits=12
+    )
+    peso_tarde = models.DecimalField(
+        null=True, blank=True, decimal_places=3, max_digits=12
+    )
 
     vaca = models.ForeignKey(Vaca, null=True, blank=True, on_delete=models.SET_NULL)
 
@@ -118,7 +125,7 @@ class FotoOrdenha(models.Model):
 
     bbox = models.ImageField(null=True, blank=True)
     bounds = models.TextField(null=True, blank=True)
-    peso_balde = models.FloatField(default=0)
+    peso_balde = models.DecimalField(default=0.0, decimal_places=3, max_digits=12)
 
     class Meta:
         verbose_name = "Foto de Ordenhas"

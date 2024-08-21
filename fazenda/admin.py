@@ -4,6 +4,8 @@ from django.contrib import admin
 from django.db.models import FloatField, ImageField, IntegerField
 from django.forms import TextInput
 from django.http import HttpResponse
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from image_labelling_tool import models as lt_models
 
@@ -68,8 +70,33 @@ class FazendaAdmin(admin.ModelAdmin):
 
 @admin.register(models.Ordenha)
 class OrdenhaAdmin(admin.ModelAdmin):
-    list_display = ["pk", "prefixo", "numero", "nome", "peso_manha", "peso_tarde"]
-    list_editable = ["prefixo", "numero", "nome", "peso_manha", "peso_tarde"]
+    list_display = [
+        "pk",
+        "vaca_link",
+        # "prefixo",
+        # "numero",
+        # "nome",
+        "peso_manha",
+        "peso_tarde",
+    ]
+    list_editable = [
+        # "prefixo",
+        # "numero",
+        # "nome",
+        "peso_manha",
+        "peso_tarde",
+    ]
+
+    def vaca_link(self, obj) -> str:
+        related_instance = obj.vaca
+        if related_instance:
+            link = reverse("admin:fazenda_vaca_change", args=[related_instance.pk])
+            return format_html('<a href="{}">{}</a>', link, related_instance)
+        else:
+            return "-"
+
+    vaca_link.short_description = "Vaca"
+    vaca_link.admin_order_field = "vaca"
 
     change_list_template = "admin/change_list_compact.html"
     formfield_overrides = {
@@ -186,6 +213,9 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
         "original_thumbnail",
         "dewarped_thumbnail",
         "bbox_thumbnail",
+    ]
+    list_editable = [
+        "peso_balde",
     ]
 
     formfield_overrides = {
