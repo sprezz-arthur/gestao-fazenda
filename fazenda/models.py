@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from image_labelling_tool import models as lt_models
 
-from utils.dataframe import closest_vaca, fix_peso, get_table, process_table
+from utils.dataframe import fix_peso, get_closest_vaca_tuple, get_table, process_table
 
 if TYPE_CHECKING:
     from django.db.models import Manager
@@ -160,11 +160,11 @@ class FotoOrdenha(models.Model):
         self.ordenha_set.all().delete()
         self.ordenhadetectada_set.all().delete()
 
-        vacas = Vaca.objects.values_list("prefixo", "numero", "nome")
+        vacas = Vaca.objects.values_list("numero", "nome")
 
         for num, nome, p1, p2 in process_table(table):
-            auto_num, auto_nome = closest_vaca((pre, num, nome), vacas)
-
+            vaca_tuple = get_closest_vaca_tuple((num, nome), vacas)
+            auto_num, auto_nome = vaca_tuple
             auto_p1 = fix_peso(p1)
             auto_p2 = fix_peso(p2)
 

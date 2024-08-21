@@ -358,7 +358,7 @@ def closest_string(s, strings):
     return min_s, distance(str_process(s), str_process(min_s))
 
 
-def closest_vaca(vaca, vacas) -> tuple[str, str]:
+def get_closest_vaca_tuple(vaca, vacas) -> tuple[str, str, str]:
     num, nome = vaca
     distances = map(
         lambda v: (

@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fazenda', '0007_remove_ordenha_prefixo'),
+        ("fazenda", "0007_remove_ordenha_prefixo"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='ordenha',
-            name='prefixo',
+            model_name="ordenha",
+            name="prefixo",
             field=models.CharField(blank=True, max_length=31, null=True),
         ),
     ]
