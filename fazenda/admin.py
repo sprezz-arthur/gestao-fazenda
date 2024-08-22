@@ -29,10 +29,10 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
     # Write the data rows
     for obj in queryset:
         row = []
-        if obj.prefixo:
-            row.append(f"{obj.numero} {obj.prefixo}")
+        if obj.vaca.prefixo:
+            row.append(f"{obj.vaca.numero} {obj.vaca.prefixo}")
         else:
-            row.append(f"{obj.numero}")
+            row.append(f"{obj.vaca.numero}")
 
         peso_balde = 0
         if obj.foto.peso_balde:
@@ -61,7 +61,7 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
 exportar_ordenha_pra_csv.short_description = "Exportar Ordenha pra CSV"
 
 
-#@admin.register(models.Fazenda)
+# @admin.register(models.Fazenda)
 class FazendaAdmin(admin.ModelAdmin):
     pass
 
@@ -215,7 +215,6 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
 
     change_form_template = "admin/foto_ordenha_change_form.html"
 
-
     @admin.display(description="Original")
     def original_thumbnail(self, obj):
         try:
@@ -269,4 +268,3 @@ admin.site.unregister(lt_models.LabelClassGroup)
 admin.site.unregister(lt_models.LabelClass)
 admin.site.unregister(lt_models.LabelClassColour)
 admin.site.unregister(lt_models.Labels)
-

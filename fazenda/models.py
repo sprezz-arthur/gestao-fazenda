@@ -54,7 +54,9 @@ class Vaca(models.Model):
         )
 
     def __str__(self) -> str:
-        return " ".join([self.numero, self.prefixo, self.nome])
+        return " ".join(
+            filter(lambda s: bool(s), [self.numero, self.prefixo, self.nome])
+        )
 
     @property
     def image_tag(self):
