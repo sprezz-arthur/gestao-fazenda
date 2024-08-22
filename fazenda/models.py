@@ -127,6 +127,9 @@ class FotoOrdenha(models.Model):
     bounds = models.TextField(null=True, blank=True)
     peso_balde = models.DecimalField(default=0.0, decimal_places=3, max_digits=12)
 
+    def __str__(self) -> str:
+        return self.original.name
+
     class Meta:
         verbose_name = "Foto de Ordenhas"
         verbose_name_plural = "Fotos de Ordenhas"

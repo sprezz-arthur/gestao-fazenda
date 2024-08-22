@@ -61,7 +61,7 @@ def exportar_ordenha_pra_csv(modeladmin, request, queryset):
 exportar_ordenha_pra_csv.short_description = "Exportar Ordenha pra CSV"
 
 
-@admin.register(models.Fazenda)
+#@admin.register(models.Fazenda)
 class FazendaAdmin(admin.ModelAdmin):
     pass
 
@@ -270,7 +270,3 @@ admin.site.unregister(lt_models.LabelClass)
 admin.site.unregister(lt_models.LabelClassColour)
 admin.site.unregister(lt_models.Labels)
 
-
-@admin.register(models.Labels)
-class LabelsAdmin(admin.ModelAdmin):
-    form = forms.LabelsForm
