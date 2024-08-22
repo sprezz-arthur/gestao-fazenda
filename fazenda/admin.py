@@ -215,6 +215,7 @@ class FotoOrdenhaAdmin(admin.ModelAdmin):
 
     change_form_template = "admin/foto_ordenha_change_form.html"
 
+
     @admin.display(description="Original")
     def original_thumbnail(self, obj):
         try:
